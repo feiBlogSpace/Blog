@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ForumServiceImp.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">CampusEventsAndEntertainmentCenter</a> &gt; <a href="index.source.html" class="el_package">com.team20.backend.service</a> &gt; <span class="el_source">ForumServiceImp.java</span></div><h1>ForumServiceImp.java</h1><pre class="source lang-java linenums">package com.team20.backend.service;
+
+import com.team20.backend.dto.ForumReplyDTO;
+
+import com.team20.backend.model.forum.*;
+import com.team20.backend.model.user.Users;
+import com.team20.backend.repository.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+
+@Service
+<span class="fc" id="L19">public class ForumServiceImp implements ForumService{</span>
+
+    @Autowired
+    private UserLikeRepository userLikeRepository;
+    @Autowired
+    private ForumReplyRepository forumReplyRepository;
+    @Autowired
+    private ForumTopicRepository forumTopicRepository;
+    @Autowired
+    private TopicStarRepository topicStarRepository;
+    @Autowired
+    private UsersRepository usersRepository;
+    @Autowired
+    private EmailService emailService;
+    @Override
+    public void saveForumTopic(ForumTopic forumTopic) {
+<span class="fc" id="L35">        forumTopicRepository.save(forumTopic);</span>
+<span class="fc" id="L36">    }</span>
+
+    @Override
+    public void saveForumReply(ForumReply forumReply) {
+<span class="fc" id="L40">        ForumTopic forumTopic=forumReply.getForumTopic();</span>
+<span class="pc bpc" id="L41" title="1 of 2 branches missed.">        emailService.replyEmail((forumReply.getParentId()==0)?forumTopic.getUserId():forumReply.getParentId(),forumReply.getUserId());</span>
+<span class="fc" id="L42">        forumReplyRepository.save(forumReply);</span>
+<span class="fc" id="L43">    }</span>
+    @Override
+    public ForumTopic findForumTopicById(int topicId) {
+<span class="nc" id="L46">        return forumTopicRepository.findById(topicId);</span>
+    }
+    @Override
+    public void deleteForumTopicById(int topicId) {
+<span class="fc" id="L50">        forumTopicRepository.deleteById(topicId);</span>
+<span class="fc" id="L51">    }</span>
+    @Override
+    @Transactional
+    public void addStar(int userId, int topicId) {
+<span class="fc" id="L55">        TopicStar topicStar = new TopicStar();</span>
+<span class="fc" id="L56">        topicStar.setUserId(userId);</span>
+<span class="fc" id="L57">        topicStar.setTopicId(topicId);</span>
+<span class="fc" id="L58">        emailService.addStarEmail(userId,topicId);</span>
+<span class="fc" id="L59">        topicStarRepository.save(topicStar);</span>
+<span class="fc" id="L60">    }</span>
+
+    @Override
+    public void deleteForumReplyById(int replyId) {
+<span class="nc" id="L64">        forumReplyRepository.deleteById(replyId);</span>
+        //forumReplyRepository.deleteByParentId(replyId);
+<span class="nc" id="L66">    }</span>
+
+    @Override
+    public void likeReply(int userId, int replyId) {
+<span class="pc" id="L70">        Users user = usersRepository.findById(userId).orElseThrow(() -&gt; new IllegalArgumentException(&quot;User not found&quot;));</span>
+<span class="fc" id="L71">        ForumReply forumReply = forumReplyRepository.findById(replyId);</span>
+
+        // 检查用户是否已经点赞
+<span class="pc bpc" id="L74" title="1 of 2 branches missed.">        if (userLikeRepository.findByUserAndReply(user, forumReply).isPresent()) {</span>
+<span class="nc" id="L75">            userLikeRepository.deleteByUserAndReply(user, forumReply);</span>
+<span class="nc" id="L76">            return;</span>
+        }
+
+        // 创建新的点赞记录
+<span class="fc" id="L80">        UserLike userLike = new UserLike();</span>
+<span class="fc" id="L81">        userLike.setUser(user);</span>
+<span class="fc" id="L82">        userLike.setReply(forumReply);</span>
+<span class="fc" id="L83">        emailService.likeReplyEmail(userId,replyId);</span>
+<span class="fc" id="L84">        userLikeRepository.save(userLike);</span>
+<span class="fc" id="L85">    }</span>
+    @Override
+    public List&lt;ForumTopic&gt; getAllForumTopics() {
+<span class="fc" id="L88">        return forumTopicRepository.findAll();</span>
+    }
+    @Override
+    public List&lt;ForumTopic&gt; getStarredTopics(int userId) {
+<span class="fc" id="L92">        List&lt;TopicStar&gt; topicStars = topicStarRepository.findByUserId(userId);</span>
+<span class="fc" id="L93">        List&lt;ForumTopic&gt; forumTopics = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L94" title="All 2 branches covered.">        for (TopicStar topicStar : topicStars) {</span>
+<span class="fc" id="L95">            forumTopics.add(forumTopicRepository.findById(topicStar.getTopicId()));</span>
+<span class="fc" id="L96">        }</span>
+<span class="fc" id="L97">        return forumTopics;</span>
+    }
+    @Override
+    public void deleteStar(int userId, int topicId) {
+<span class="fc" id="L101">        topicStarRepository.deleteByUserIdAndTopicId(userId, topicId);</span>
+<span class="fc" id="L102">    }</span>
+    @Override
+    public UserLike getUserLike(int userId, int replyId) {
+<span class="nc" id="L105">        Users user = usersRepository.findById(userId).orElseThrow(() -&gt; new IllegalArgumentException(&quot;User not found&quot;));</span>
+<span class="nc" id="L106">        ForumReply forumReply = forumReplyRepository.findById(replyId);</span>
+<span class="nc" id="L107">        return userLikeRepository.findByUserAndReply(user, forumReply).orElse(null);</span>
+    }
+
+    @Override
+    public List&lt;ForumTopic&gt; searchForumTopics(String keyword, Date startDate, Date endDate) {
+<span class="nc" id="L112">        return forumTopicRepository.findByTitleContainingAndPostTimeBetween(keyword, startDate, endDate);</span>
+    }
+
+    @Override
+    public boolean hasSecondaryReplies(int id) {
+<span class="nc" id="L117">        return forumReplyRepository.existsByParentId(id);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.9.202303310957</span></div></body></html>

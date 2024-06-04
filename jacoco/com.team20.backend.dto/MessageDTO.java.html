@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MessageDTO.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">CampusEventsAndEntertainmentCenter</a> &gt; <a href="index.source.html" class="el_package">com.team20.backend.dto</a> &gt; <span class="el_source">MessageDTO.java</span></div><h1>MessageDTO.java</h1><pre class="source lang-java linenums">package com.team20.backend.dto;
+
+import java.time.LocalDateTime;
+
+public class MessageDTO {
+
+    private String sender;
+
+    private String content;
+
+    private LocalDateTime time;
+
+<span class="fc" id="L13">    public MessageDTO(String sender, String content, LocalDateTime time) {</span>
+<span class="fc" id="L14">        this.sender = sender;</span>
+<span class="fc" id="L15">        this.content = content;</span>
+<span class="fc" id="L16">        this.time = time;</span>
+<span class="fc" id="L17">    }</span>
+
+    public String getSender() {
+<span class="nc" id="L20">        return sender;</span>
+    }
+
+    public void setSender(String sender) {
+<span class="nc" id="L24">        this.sender = sender;</span>
+<span class="nc" id="L25">    }</span>
+
+    public String getContent() {
+<span class="nc" id="L28">        return content;</span>
+    }
+
+    public void setContent(String content) {
+<span class="nc" id="L32">        this.content = content;</span>
+<span class="nc" id="L33">    }</span>
+
+    public LocalDateTime getTime() {
+<span class="nc" id="L36">        return time;</span>
+    }
+
+    public void setTime(LocalDateTime time) {
+<span class="fc" id="L40">        this.time = time;</span>
+<span class="fc" id="L41">    }</span>
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.9.202303310957</span></div></body></html>

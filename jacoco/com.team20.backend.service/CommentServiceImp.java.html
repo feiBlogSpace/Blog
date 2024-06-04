@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CommentServiceImp.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">CampusEventsAndEntertainmentCenter</a> &gt; <a href="index.source.html" class="el_package">com.team20.backend.service</a> &gt; <span class="el_source">CommentServiceImp.java</span></div><h1>CommentServiceImp.java</h1><pre class="source lang-java linenums">package com.team20.backend.service;
+
+import com.team20.backend.model.history.Comment;
+import com.team20.backend.model.Event;
+import com.team20.backend.model.user.Users;
+import com.team20.backend.repository.CommentRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+
+@Service
+<span class="fc" id="L16">public class CommentServiceImp implements CommentService{</span>
+    @Autowired
+    private CommentRepository commentRepository;
+
+    @Autowired
+    private UsersService usersService;
+
+    @Autowired
+    private EventService eventService;
+
+    @Override
+    public Comment addComment(int userId, int eventId, String content, int rating) {
+<span class="fc" id="L28">        Users user = usersService.findUserById(userId);</span>
+<span class="fc" id="L29">        Event event = eventService.findByEventId(eventId);</span>
+
+<span class="pc bpc" id="L31" title="1 of 4 branches missed.">        if (rating &lt; 0 || rating &gt; 10) {</span>
+<span class="fc" id="L32">            throw new IllegalArgumentException(&quot;Rating must be between 0 and 10&quot;);</span>
+        }
+
+<span class="fc" id="L35">        Optional&lt;Comment&gt; existingComment = commentRepository.findByUserAndEvent(user, event);</span>
+<span class="pc bpc" id="L36" title="1 of 2 branches missed.">        if (existingComment.isPresent()) {</span>
+<span class="nc" id="L37">            throw new IllegalStateException(&quot;User has already commented on this event&quot;);</span>
+        }
+
+<span class="fc" id="L40">        Comment comment = new Comment();</span>
+<span class="fc" id="L41">        comment.setUser(user);</span>
+<span class="fc" id="L42">        comment.setEvent(event);</span>
+<span class="fc" id="L43">        comment.setContent(content);</span>
+<span class="fc" id="L44">        comment.setRating(rating);</span>
+<span class="fc" id="L45">        comment.setCreated_at(new Date());</span>
+
+<span class="fc" id="L47">        Comment c = commentRepository.save(comment);</span>
+<span class="fc" id="L48">        updateEventRating(event);</span>
+<span class="fc" id="L49">        return c;</span>
+    }
+
+    @Override
+    public Comment modifyComment(int userId, int eventId, String content, int rating) {
+<span class="fc" id="L54">        Users user = usersService.findUserById(userId);</span>
+<span class="fc" id="L55">        Event event = eventService.findByEventId(eventId);</span>
+
+<span class="fc" id="L57">        Optional&lt;Comment&gt; existingComment = commentRepository.findByUserAndEvent(user, event);</span>
+<span class="fc bfc" id="L58" title="All 2 branches covered.">        if (existingComment.isEmpty()) {</span>
+<span class="fc" id="L59">            throw new IllegalStateException(&quot;User has not commented on this event&quot;);</span>
+        }
+
+<span class="fc" id="L62">        Comment comment = existingComment.get();</span>
+<span class="pc bpc" id="L63" title="1 of 2 branches missed.">        if (comment.getUser().getUserId() != userId) {</span>
+<span class="nc" id="L64">            throw new IllegalArgumentException(&quot;User can only modify their own comments&quot;);</span>
+        }
+
+<span class="pc bpc" id="L67" title="2 of 4 branches missed.">        if (rating &lt; 0 || rating &gt; 10) {</span>
+<span class="nc" id="L68">            throw new IllegalArgumentException(&quot;Rating must be between 0 and 10&quot;);</span>
+        }
+
+<span class="fc" id="L71">        comment.setContent(content);</span>
+<span class="fc" id="L72">        comment.setRating(rating);</span>
+<span class="fc" id="L73">        comment.setCreated_at(new Date()); // Update the timestamp if needed</span>
+<span class="fc" id="L74">        Comment c = commentRepository.save(comment);</span>
+<span class="fc" id="L75">        updateEventRating(event);</span>
+<span class="fc" id="L76">        return c;</span>
+    }
+
+    @Override
+    public void deleteComment(int userId, int eventId) {
+<span class="fc" id="L81">        Users user = usersService.findUserById(userId);</span>
+<span class="fc" id="L82">        Event event = eventService.findByEventId(eventId);</span>
+
+<span class="fc" id="L84">        Optional&lt;Comment&gt; existingComment = commentRepository.findByUserAndEvent(user, event);</span>
+<span class="fc bfc" id="L85" title="All 2 branches covered.">        if (existingComment.isEmpty()) {</span>
+<span class="fc" id="L86">            throw new IllegalStateException(&quot;User has not commented on this event&quot;);</span>
+        }
+
+<span class="fc" id="L89">        Comment comment = existingComment.get();</span>
+<span class="pc bpc" id="L90" title="1 of 2 branches missed.">        if (comment.getUser().getUserId() != userId) {</span>
+<span class="nc" id="L91">            throw new IllegalArgumentException(&quot;User can only delete their own comments&quot;);</span>
+        }
+<span class="fc" id="L93">        commentRepository.delete(comment);</span>
+<span class="fc" id="L94">        updateEventRating(event);</span>
+<span class="fc" id="L95">    }</span>
+
+
+    private void updateEventRating(Event event) {
+<span class="fc" id="L99">        List&lt;Comment&gt; comments = commentRepository.getCommentsByEvent(event);</span>
+<span class="pc bpc" id="L100" title="1 of 2 branches missed.">        if (comments.isEmpty()) {</span>
+<span class="fc" id="L101">            event.setRating(0);</span>
+            //System.out.println(&quot;No comments&quot;);
+        } else {
+<span class="nc" id="L104">            double averageRating = comments.stream()</span>
+<span class="nc" id="L105">                    .mapToInt(Comment::getRating)</span>
+<span class="nc" id="L106">                    .average()</span>
+<span class="nc" id="L107">                    .orElse(0);</span>
+            //System.out.println(averageRating);
+<span class="nc" id="L109">            event.setRating((int)(averageRating + 0.5));</span>
+        }
+<span class="fc" id="L111">        eventService.saveEvent(event); // 保存事件以更新评分</span>
+<span class="fc" id="L112">    }</span>
+
+    @Override
+    @Transactional
+    public List&lt;Comment&gt; findCommentsByEventId(int eventId) {
+<span class="fc" id="L117">        Event event = eventService.findByEventId(eventId);</span>
+<span class="fc" id="L118">        return commentRepository.getCommentsByEvent(event);</span>
+    }
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.9.202303310957</span></div></body></html>

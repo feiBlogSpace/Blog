@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EmailController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">CampusEventsAndEntertainmentCenter</a> &gt; <a href="index.source.html" class="el_package">com.team20.backend.controller</a> &gt; <span class="el_source">EmailController.java</span></div><h1>EmailController.java</h1><pre class="source lang-java linenums">package com.team20.backend.controller;
+
+import com.team20.backend.model.Email;
+import com.team20.backend.model.user.Users;
+import com.team20.backend.service.EmailService;
+import com.team20.backend.service.UsersService;
+import com.team20.backend.util.JwtUtils;
+import jakarta.annotation.Resource;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@RestController
+<span class="fc" id="L20">public class EmailController {</span>
+
+    @Autowired
+    private UsersService usersService;
+
+    @Autowired
+    private EmailService emailService;
+    @Resource
+    private JwtUtils jwtUtils;
+//    @GetMapping(&quot;/emails&quot;)
+//    public ResponseEntity&lt;List&lt;Email&gt;&gt; getEmailsForUser(@RequestHeader(&quot;Authorization&quot;) String token) {
+//        if(!jwtUtils.validateSuperUser(token)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+//        Users user = usersService.findUserByUsername(jwtUtils.getUsername(token));
+//        if (user != null) {
+//            int userId = user.getUserId();
+//            List&lt;Email&gt; emails = emailService.getEmailsByUserId(userId);
+//            List&lt;Email&gt; newEmails=new ArrayList&lt;&gt;();
+//            for(Email e:emails){
+//                if (e.getStatus()!= Email.EmailStatus.deleted) newEmails.add(e);
+//            }
+//            newEmails.sort((e1, e2) -&gt; e2.getTime().compareTo(e1.getTime()));
+//            return ResponseEntity.ok().body(newEmails);
+//        } else {
+//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+//        }
+//    }
+
+    @GetMapping(&quot;/emails&quot;)
+    public ResponseEntity&lt;List&lt;Email&gt;&gt; getEmailsForUser(@RequestHeader(&quot;Authorization&quot;) String token) {
+        // Remove &quot;Bearer &quot; prefix and extract the user ID from the token
+<span class="nc" id="L50">        String username = jwtUtils.getUsername(token.substring(7));</span>
+<span class="nc" id="L51">        Users users=usersService.findUserByUsername(username);</span>
+<span class="nc" id="L52">        int userId = users.getUserId();</span>
+<span class="nc bnc" id="L53" title="All 2 branches missed.">        if (userId != 0) {</span>
+<span class="nc" id="L54">            List&lt;Email&gt; emails = emailService.getEmailsByUserId(userId);</span>
+<span class="nc bnc" id="L55" title="All 2 branches missed.">            if (emails.isEmpty()) {</span>
+<span class="nc" id="L56">                return ResponseEntity.ok(Collections.emptyList()); // 返回一个空列表</span>
+            }
+<span class="nc" id="L58">            List&lt;Email&gt; filteredEmails = emails.stream()</span>
+<span class="nc bnc" id="L59" title="All 2 branches missed.">                    .filter(email -&gt; email.getStatus() != Email.EmailStatus.deleted)</span>
+<span class="nc" id="L60">                    .sorted((e1, e2) -&gt; e2.getTime().compareTo(e1.getTime()))</span>
+<span class="nc" id="L61">                    .collect(Collectors.toList());</span>
+
+<span class="nc" id="L63">            return ResponseEntity.ok(filteredEmails);</span>
+        } else {
+<span class="nc" id="L65">            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();</span>
+        }
+    }
+    @PostMapping(&quot;/emails/mark-as-read&quot;)
+    public ResponseEntity&lt;Void&gt; markEmailAsRead(@RequestParam int emailId) {
+<span class="fc" id="L70">        emailService.markEmailAsRead(emailId);</span>
+<span class="fc" id="L71">        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();</span>
+    }
+    @PostMapping(&quot;/emails/mark-as-deleted&quot;)
+    public ResponseEntity&lt;Void&gt; markEmailAsDeleted(@RequestParam int emailId) {
+<span class="fc" id="L75">        emailService.markEmailAsDeleted(emailId);</span>
+<span class="fc" id="L76">        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.9.202303310957</span></div></body></html>

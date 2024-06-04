@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AvatarServiceImp.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">CampusEventsAndEntertainmentCenter</a> &gt; <a href="index.source.html" class="el_package">com.team20.backend.service</a> &gt; <span class="el_source">AvatarServiceImp.java</span></div><h1>AvatarServiceImp.java</h1><pre class="source lang-java linenums">package com.team20.backend.service;
+
+import com.team20.backend.model.user.Avatar;
+import com.team20.backend.repository.AvatarRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+<span class="fc" id="L12">public class AvatarServiceImp implements AvatarService {</span>
+    @Autowired
+    private AvatarRepository avatarRepository;
+
+    @Override
+<span class="fc" id="L17">    public List&lt;Avatar&gt; findAvatarByUserId(int userId) { return avatarRepository.findAvatarByUserId(userId);}</span>
+
+    @Override
+    @Cacheable(value = &quot;DefaultAvatar&quot;)
+<span class="fc" id="L21">    public Avatar getDefaultAvatar() { return avatarRepository.findAvatarByAvatarId(2);}</span>
+
+    @Override
+<span class="fc" id="L24">    public void saveAvatar(Avatar avatar) { avatarRepository.save(avatar); }</span>
+
+    @Override
+<span class="fc" id="L27">    public List&lt;Avatar&gt; findByStatus(String status) { return  avatarRepository.findByStatus(status); }</span>
+
+    @Override
+<span class="fc" id="L30">    public Avatar findAvatarById(int avatarId) {return avatarRepository.findAvatarByAvatarId(avatarId);}</span>
+
+    @Override
+<span class="fc" id="L33">    public void deleteAvatar(int avatarId) {avatarRepository.delete(findAvatarById(avatarId));}</span>
+
+    @Override
+    public Avatar findApprovedAvatarByUserId(int organizerId) {
+<span class="fc" id="L37">        List&lt;Avatar&gt; avatars = findAvatarByUserId(organizerId);</span>
+<span class="fc bfc" id="L38" title="All 2 branches covered.">        for (Avatar avatar : avatars) {</span>
+<span class="fc bfc" id="L39" title="All 2 branches covered.">            if (avatar.getStatus().equals(&quot;approved&quot;)) {</span>
+<span class="fc" id="L40">                return avatar;</span>
+            }
+<span class="fc" id="L42">        }</span>
+<span class="fc" id="L43">        return getDefaultAvatar();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.9.202303310957</span></div></body></html>

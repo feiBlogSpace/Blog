@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ForumController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">CampusEventsAndEntertainmentCenter</a> &gt; <a href="index.source.html" class="el_package">com.team20.backend.controller</a> &gt; <span class="el_source">ForumController.java</span></div><h1>ForumController.java</h1><pre class="source lang-java linenums">package com.team20.backend.controller;
+
+import com.team20.backend.dto.*;
+import com.team20.backend.model.forum.*;
+import com.team20.backend.service.*;
+import com.team20.backend.util.JwtUtils;
+import jakarta.annotation.Resource;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
+
+
+@Controller
+<span class="fc" id="L22">public class ForumController {</span>
+
+    @Autowired
+    private ForumService forumService;
+
+    @Autowired
+    private UsersService userService;
+    @Autowired
+    private DTOService dtoService;
+    @Resource
+    private JwtUtils jwtUtils;
+
+    /**
+     * 创建论坛主题
+     * @param token token
+     * @param forumTopic 论坛主题
+     * @return 创建结果
+     */
+    @PostMapping(&quot;/forum/topic&quot;)
+    public ResponseEntity&lt;String&gt; createForumTopic(@RequestHeader(&quot;Authorization&quot;) String token, @RequestBody ForumTopic forumTopic) {
+<span class="fc bfc" id="L42" title="All 2 branches covered.">        if (!jwtUtils.validateToken(token)) {</span>
+<span class="fc" id="L43">            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();</span>
+        }
+<span class="fc" id="L45">        forumTopic.setStar(0);</span>
+<span class="fc" id="L46">        forumTopic.setReplyNum(0);</span>
+<span class="fc" id="L47">        forumService.saveForumTopic(forumTopic);</span>
+<span class="fc" id="L48">        return ResponseEntity.ok(&quot;话题创建成功&quot;);</span>
+    }
+
+    /**
+     * 删除论坛主题
+     * @param token token
+     * @param topicId 主题id
+     * @return 删除结果
+     */
+    @DeleteMapping(&quot;/forum/topic/delete/{topicId}&quot;)
+    public ResponseEntity&lt;String&gt; deleteForumTopic(@RequestHeader(&quot;Authorization&quot;) String token, @PathVariable(&quot;topicId&quot;) int topicId) {
+<span class="fc bfc" id="L59" title="All 2 branches covered.">        if (!jwtUtils.validateToken(token)) {</span>
+<span class="fc" id="L60">            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();</span>
+        }
+<span class="fc" id="L62">        forumService.deleteForumTopicById(topicId);</span>
+
+<span class="fc" id="L64">        return ResponseEntity.ok(&quot;话题删除成功&quot;);</span>
+    }
+
+    /**
+     * 收藏或取消收藏主题
+     * @param token token
+     * @param topicId 主题id
+     * @return 收藏结果
+     */
+    @PostMapping(&quot;/forum/topic/{topicId}/star&quot;)
+    @Transactional
+    public ResponseEntity&lt;String&gt; addFavoriteTopic(@RequestHeader(&quot;Authorization&quot;) String token, @PathVariable(&quot;topicId&quot;) int topicId) {
+        // 验证用户身份
+<span class="fc bfc" id="L77" title="All 2 branches covered.">        if (!jwtUtils.validateToken(token)) {</span>
+<span class="fc" id="L78">            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();</span>
+        }
+
+        // 获取当前用户信息
+<span class="fc" id="L82">        int userId = userService.findUserByUsername(jwtUtils.getUsername(token)).getUserId();</span>
+        // 判断是否已经收藏
+<span class="pc bpc" id="L84" title="1 of 4 branches missed.">        if (forumService.getStarredTopics(userId).stream().anyMatch(topic -&gt; topic.getId() == topicId)) {</span>
+            // 已经收藏 取消收藏
+<span class="fc" id="L86">            forumService.deleteStar(userId, topicId);</span>
+<span class="fc" id="L87">            return ResponseEntity.ok(&quot;取消收藏成功&quot;);</span>
+        }
+        // 添加收藏关系
+<span class="fc" id="L90">        forumService.addStar(userId, topicId);</span>
+
+<span class="fc" id="L92">        return ResponseEntity.ok(&quot;添加收藏成功&quot;);</span>
+    }
+
+    /**
+     * 创建论坛回复
+     * @param token token
+     * @param content 内容
+     * @param topicId 主题id
+     * @return 回复结果
+     */
+    @PostMapping(&quot;/forum/reply&quot;)
+    public ResponseEntity&lt;String&gt; createForumReply(@RequestHeader(&quot;Authorization&quot;) String token,
+                                                   @RequestParam(&quot;content&quot;) String content,
+                                                   @RequestParam(&quot;topicId&quot;) int topicId,
+                                                   @RequestParam(&quot;parentId&quot;) int parentId) {
+<span class="fc bfc" id="L107" title="All 2 branches covered.">        if (!jwtUtils.validateToken(token)) {</span>
+<span class="fc" id="L108">            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();</span>
+        }
+<span class="fc" id="L110">        ForumReply forumReply = new ForumReply();</span>
+<span class="fc" id="L111">        forumReply.setPostTime(new Date());</span>
+<span class="fc" id="L112">        forumReply.setContent(content);</span>
+<span class="fc" id="L113">        forumReply.setForumTopic(forumService.findForumTopicById(topicId));</span>
+<span class="fc" id="L114">        forumReply.setLikeNum(0);</span>
+<span class="fc" id="L115">        forumReply.setUserId(userService.findUserByUsername(jwtUtils.getUsername(token)).getUserId());</span>
+<span class="fc" id="L116">        forumReply.setParentId(parentId);</span>
+<span class="fc" id="L117">        forumService.saveForumReply(forumReply);</span>
+<span class="fc" id="L118">        return ResponseEntity.ok(&quot;回复成功&quot;);</span>
+    }
+    /**
+     * 删除论坛回复
+     * @param token token
+     * @param replyId 回复id
+     * @return 删除结果
+     */
+    @DeleteMapping(&quot;/forum/reply/delete/{replyId}&quot;)
+    public ResponseEntity&lt;String&gt; deleteForumReply(@RequestHeader(&quot;Authorization&quot;) String token, @PathVariable(&quot;replyId&quot;) int replyId) {
+<span class="fc bfc" id="L128" title="All 2 branches covered.">        if (!jwtUtils.validateToken(token)) {</span>
+<span class="fc" id="L129">            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();</span>
+        }
+<span class="fc" id="L131">        forumService.deleteForumReplyById(replyId);</span>
+<span class="fc" id="L132">        return ResponseEntity.ok(&quot;删除成功&quot;);</span>
+    }
+
+    /**
+     * 点赞回复或取消点赞
+     * @param token token
+     * @param replyId 回复id
+     * @return 点赞结果
+     */
+    @PostMapping(&quot;/forum/reply/like/{replyId}&quot;)
+    @Transactional
+    public ResponseEntity&lt;String&gt; likeReply(@RequestHeader(&quot;Authorization&quot;) String token, @PathVariable(&quot;replyId&quot;) int replyId) {
+<span class="fc bfc" id="L144" title="All 2 branches covered.">        if (!jwtUtils.validateToken(token)) {</span>
+<span class="fc" id="L145">            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();</span>
+        }
+<span class="fc" id="L147">        int userId = userService.findUserByUsername(jwtUtils.getUsername(token)).getUserId();</span>
+<span class="fc" id="L148">        forumService.likeReply(userId, replyId);</span>
+<span class="fc" id="L149">        return ResponseEntity.ok(&quot;操作成功&quot;);</span>
+    }
+
+    /**
+     * 获取论坛主题
+     * @param topicId 主题id
+     * @return 论坛主题
+     */
+    @GetMapping(&quot;/forum/{topicId}&quot;)
+    public ResponseEntity&lt;TopicDTO&gt; getForumTopic(@PathVariable(&quot;topicId&quot;) int topicId) {
+<span class="fc" id="L159">        return ResponseEntity.ok().body(dtoService.getTopicDTO(topicId));</span>
+    }
+
+    /**
+     * 获取论坛主题列表
+     * @return 论坛主题列表
+     */
+    @GetMapping(&quot;/forum&quot;)
+    public ResponseEntity&lt;List&lt;TopicUserDTO&gt;&gt; getForumTopics() {
+<span class="fc" id="L168">        return ResponseEntity.ok().body(forumService.getAllForumTopics().stream().map(topic -&gt; {</span>
+//            if( == null) {
+//                return null;
+//            }
+<span class="nc" id="L172">            UserDTO user = dtoService.getUserDTO(topic.getUserId());</span>
+
+<span class="nc" id="L174">            return new TopicUserDTO(topic, user);</span>
+<span class="fc" id="L175">        }).toList());</span>
+    }
+
+    /**
+     * 根据关键字和时间范围搜索论坛主题
+     * @param keyword 搜索关键字
+     * @param startDate 开始时间
+     * @param endDate 结束时间
+     * @return 符合条件的论坛主题列表
+     */
+    @GetMapping(&quot;/forum/search&quot;)
+    public ResponseEntity&lt;List&lt;TopicUserDTO&gt;&gt; searchForumTopics(
+            @RequestParam String keyword,
+            @RequestParam @DateTimeFormat(pattern = &quot;yyyy-MM-dd HH:mm:ss&quot;) Date startDate,
+            @RequestParam @DateTimeFormat(pattern = &quot;yyyy-MM-dd HH:mm:ss&quot;) Date endDate) {
+
+<span class="fc" id="L191">        List&lt;ForumTopic&gt; forumTopics = forumService.searchForumTopics(keyword, startDate, endDate);</span>
+        // 将 ForumTopic 转换为 TopicUserDTO 并返回
+<span class="fc" id="L193">        List&lt;TopicUserDTO&gt; topicUserDTOs = forumTopics.stream().map(topic -&gt; {</span>
+<span class="nc" id="L194">            UserDTO user = dtoService.getUserDTO(topic.getUserId());</span>
+<span class="nc" id="L195">            return new TopicUserDTO(topic, user);</span>
+<span class="fc" id="L196">        }).toList();</span>
+
+<span class="fc" id="L198">        return ResponseEntity.ok(topicUserDTOs);</span>
+    }
+
+
+    /**
+     * 获取论坛回复
+     * @param topicId 主题id
+     * @return 论坛回复列表
+     */
+    @GetMapping(&quot;/forum/{topicId}/replies&quot;)
+    public ResponseEntity&lt;List&lt;ForumReplyDTO&gt;&gt; getForumReplies(@PathVariable(&quot;topicId&quot;) int topicId) {
+<span class="fc" id="L209">        return ResponseEntity.ok().body(dtoService.getForumReplies(topicId).stream().peek(reply -&gt;</span>
+<span class="nc" id="L210">                        reply.setHasSecondaryReplies(forumService.hasSecondaryReplies(reply.getReply().getId())))</span>
+<span class="fc" id="L211">                .collect(Collectors.toList()));</span>
+    }
+    /**
+     * 获取二级回复
+     * @param replyId 回复id
+     * @return 二级回复列表
+     */
+    @GetMapping(&quot;/forum/reply/{replyId}/replies&quot;)
+    public ResponseEntity&lt;List&lt;ForumReplyDTO&gt;&gt; getSecondLevelReplies(@PathVariable(&quot;replyId&quot;) int replyId) {
+<span class="nc" id="L220">        return ResponseEntity.ok().body(dtoService.getForumRepliesByReplyId(replyId));</span>
+    }
+    /**
+     * 获取用户收藏的主题
+     * @param token token
+     * @return 用户收藏的主题列表
+     */
+    @GetMapping(&quot;/forum/starred&quot;)
+    public ResponseEntity&lt;List&lt;TopicUserDTO&gt;&gt; getStarredTopics(@RequestHeader(&quot;Authorization&quot;) String token) {
+<span class="fc bfc" id="L229" title="All 2 branches covered.">        if (!jwtUtils.validateToken(token)) {</span>
+<span class="fc" id="L230">            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();</span>
+        }
+<span class="fc" id="L232">        int userId = userService.findUserByUsername(jwtUtils.getUsername(token)).getUserId();</span>
+<span class="fc" id="L233">        return ResponseEntity.ok().body(forumService.getStarredTopics(userId).stream().map(topic -&gt; {</span>
+<span class="nc" id="L234">            UserDTO user = dtoService.getUserDTO(topic.getUserId());</span>
+<span class="nc" id="L235">            return new TopicUserDTO(topic, user);</span>
+<span class="fc" id="L236">        }).toList());</span>
+    }
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.9.202303310957</span></div></body></html>

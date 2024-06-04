@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PrivateMessageController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">CampusEventsAndEntertainmentCenter</a> &gt; <a href="index.source.html" class="el_package">com.team20.backend.controller</a> &gt; <span class="el_source">PrivateMessageController.java</span></div><h1>PrivateMessageController.java</h1><pre class="source lang-java linenums">package com.team20.backend.controller;
+
+
+import com.team20.backend.dto.UserDTO;
+import com.team20.backend.dto.UserDTOWithRead;
+import com.team20.backend.model.ChatMessage;
+import com.team20.backend.repository.ChatMessageRepository;
+import com.team20.backend.service.DTOService;
+import com.team20.backend.service.EmailService;
+import com.team20.backend.service.UsersService;
+import com.team20.backend.util.JwtUtils;
+import jakarta.annotation.Resource;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
+import java.util.*;
+
+@Controller
+<span class="fc" id="L23">public class PrivateMessageController {</span>
+    @Autowired
+    private ChatMessageRepository chatMessageRepository;
+    @Autowired
+    private EmailService emailService;
+    @Autowired
+    private UsersService usersService;
+    @Autowired
+    private DTOService dtoService;
+    @Resource
+    private JwtUtils jwtUtils;
+    @PostMapping(&quot;/chatMessage&quot;)
+    public ResponseEntity&lt;String&gt; PrivateChat(@RequestHeader(&quot;Authorization&quot;) String token, @RequestBody ChatMessage chatMessage) {
+<span class="fc bfc" id="L36" title="All 2 branches covered.">        if(!jwtUtils.validateToken(token)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();</span>
+<span class="fc" id="L37">        chatMessage.setType(ChatMessage.MessageType.CHAT);</span>
+<span class="fc" id="L38">        chatMessage.setTime(LocalDateTime.now());</span>
+<span class="fc" id="L39">        emailService.PrivateChatMessage(chatMessage);</span>
+<span class="fc" id="L40">        chatMessageRepository.save(chatMessage);</span>
+<span class="fc" id="L41">        return ResponseEntity.ok(&quot;发送成功&quot;);</span>
+    }
+
+    @GetMapping(&quot;/chatMessage&quot;)
+    public ResponseEntity&lt;List&lt;ChatMessage&gt;&gt; getPrivateChat(@RequestHeader(&quot;Authorization&quot;) String token, @RequestParam String username) {
+<span class="fc bfc" id="L46" title="All 2 branches covered.">        if(!jwtUtils.validateToken(token)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();</span>
+<span class="fc" id="L47">        List&lt;ChatMessage&gt; chatMessages = chatMessageRepository.findByReceiverAndSender(jwtUtils.getUsername(token), username);</span>
+<span class="pc bpc" id="L48" title="1 of 2 branches missed.">        for(ChatMessage chatMessage : chatMessages) chatMessage.setType(ChatMessage.MessageType.READ);</span>
+<span class="fc" id="L49">        chatMessageRepository.saveAll(chatMessages);</span>
+<span class="fc" id="L50">        List&lt;ChatMessage&gt; chatMessages1 = chatMessageRepository.findByReceiverAndSender(username, jwtUtils.getUsername(token));</span>
+        //将这两个list合并并按照时间排序
+<span class="fc" id="L52">        chatMessages.addAll(chatMessages1);</span>
+<span class="fc" id="L53">        chatMessages.sort(Comparator.comparing(ChatMessage::getTime));</span>
+<span class="fc" id="L54">        return ResponseEntity.ok(chatMessages);</span>
+    }
+
+    @GetMapping(&quot;/isRead&quot;)
+    public ResponseEntity&lt;Boolean&gt; getReadStatus(@RequestHeader(&quot;Authorization&quot;) String token) {
+<span class="fc bfc" id="L59" title="All 2 branches covered.">        if(!jwtUtils.validateToken(token)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();</span>
+<span class="fc" id="L60">        String username = jwtUtils.getUsername(token);</span>
+<span class="fc" id="L61">        List&lt;ChatMessage&gt; chatMessages = chatMessageRepository.findByReceiverAndType(username, ChatMessage.MessageType.CHAT);</span>
+<span class="fc bfc" id="L62" title="All 2 branches covered.">        if(chatMessages.size() == 0) return ResponseEntity.ok(false);</span>
+<span class="fc" id="L63">        return ResponseEntity.ok(true);</span>
+    }
+
+    @PostMapping(&quot;/chatList&quot;)
+    public ResponseEntity&lt;List&lt;UserDTOWithRead&gt;&gt; markAsRead(@RequestHeader(&quot;Authorization&quot;) String token) {
+<span class="fc bfc" id="L68" title="All 2 branches covered.">        if(!jwtUtils.validateToken(token)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();</span>
+<span class="fc" id="L69">        String username = jwtUtils.getUsername(token);</span>
+<span class="fc" id="L70">        List&lt;ChatMessage&gt; chatMessages = chatMessageRepository.findBySenderOrReceiver(username, username);</span>
+<span class="fc" id="L71">        List&lt;Map&lt;String, Boolean&gt;&gt; res = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L72">        Map&lt;String, Boolean&gt; mp = new HashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L73" title="All 2 branches covered.">        for(ChatMessage chatMessage : chatMessages) {</span>
+<span class="fc bfc" id="L74" title="All 2 branches covered.">            if(chatMessage.getSender().equals(username)) {</span>
+                //UserDTO userDTO = dtoService.getUserDTO(usersService.findUserByUsername(chatMessage.getReceiver()).getUserId());
+<span class="fc bfc" id="L76" title="All 2 branches covered.">                if(mp.containsKey(chatMessage.getReceiver())) {</span>
+<span class="pc bpc" id="L77" title="1 of 2 branches missed.">                    mp.put(chatMessage.getReceiver(), chatMessage.getType() == ChatMessage.MessageType.READ);</span>
+
+<span class="pc bpc" id="L79" title="1 of 2 branches missed.">                    res.add(Map.of(chatMessage.getReceiver(), chatMessage.getType() == ChatMessage.MessageType.READ));</span>
+<span class="fc" id="L80">                    continue;</span>
+                } else {
+<span class="pc bpc" id="L82" title="1 of 2 branches missed.">                    mp.put(chatMessage.getReceiver(), chatMessage.getType() == ChatMessage.MessageType.READ);</span>
+                }
+
+<span class="pc bpc" id="L85" title="1 of 2 branches missed.">                res.add(Map.of(chatMessage.getReceiver(), chatMessage.getType() == ChatMessage.MessageType.READ));</span>
+            } else {
+                //UserDTO userDTO = dtoService.getUserDTO(usersService.findUserByUsername(chatMessage.getSender()).getUserId());
+<span class="fc bfc" id="L88" title="All 2 branches covered.">                if(mp.containsKey(chatMessage.getSender())) {</span>
+<span class="pc bpc" id="L89" title="1 of 2 branches missed.">                    mp.put(chatMessage.getSender(), chatMessage.getType() == ChatMessage.MessageType.READ);</span>
+<span class="pc bpc" id="L90" title="1 of 2 branches missed.">                    res.add(Map.of(chatMessage.getSender(), chatMessage.getType() == ChatMessage.MessageType.READ));</span>
+<span class="fc" id="L91">                    continue;</span>
+                } else {
+<span class="pc bpc" id="L93" title="1 of 2 branches missed.">                    mp.put(chatMessage.getSender(), chatMessage.getType() == ChatMessage.MessageType.READ);</span>
+                }
+<span class="pc bpc" id="L95" title="1 of 2 branches missed.">                res.add(Map.of(chatMessage.getSender(), chatMessage.getType() == ChatMessage.MessageType.READ));</span>
+            }
+<span class="fc" id="L97">        }</span>
+<span class="fc" id="L98">        List&lt;UserDTOWithRead&gt; res1 = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L99" title="All 2 branches covered.">        for(Map&lt;String, Boolean&gt; map : res) {</span>
+<span class="fc" id="L100">            String key = map.keySet().iterator().next();</span>
+<span class="fc" id="L101">            UserDTO userDTO = dtoService.getUserDTO(usersService.findUserByUsername(key).getUserId());</span>
+<span class="fc" id="L102">            res1.add(new UserDTOWithRead(userDTO, map.get(key)));</span>
+<span class="fc" id="L103">        }</span>
+<span class="fc" id="L104">        return ResponseEntity.ok(res1);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.9.202303310957</span></div></body></html>

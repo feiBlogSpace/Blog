@@ -1,0 +1,359 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EventController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">CampusEventsAndEntertainmentCenter</a> &gt; <a href="index.source.html" class="el_package">com.team20.backend.controller</a> &gt; <span class="el_source">EventController.java</span></div><h1>EventController.java</h1><pre class="source lang-java linenums">package com.team20.backend.controller;
+
+import com.team20.backend.dto.EventDTO;
+import com.team20.backend.dto.EventQuery;
+import com.team20.backend.dto.UserEventDTO;
+import com.team20.backend.model.*;
+import com.team20.backend.model.user.Users;
+import com.team20.backend.service.*;
+import com.team20.backend.util.JwtUtils;
+import jakarta.annotation.Resource;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.*;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.stream.Collectors;
+
+@Controller
+<span class="fc" id="L24">public class EventController {</span>
+    @Autowired
+    private UsersService usersService;
+
+    @Autowired
+    private EventService eventService;
+
+    @Autowired
+    private VenueService venueService;
+
+    @Autowired
+    private CommentService commentService;
+
+    @Autowired
+    private UserEventService userEventService;
+
+    @Autowired
+    private DTOService dtoService;
+    @Resource
+    private JwtUtils jwtUtils;
+
+    /**
+     * 推荐活动
+     * @param token token
+     * @return 推荐活动
+     */
+    @GetMapping (&quot;/recommend&quot;)
+    @Transactional
+    public ResponseEntity&lt;List&lt;EventDTO&gt;&gt; getRecommendEvent(@RequestHeader(&quot;Authorization&quot;) String token) {
+<span class="fc bfc" id="L53" title="All 2 branches covered.">        if (!jwtUtils.validateToken(token)) {</span>
+<span class="fc" id="L54">            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();</span>
+        }
+<span class="fc" id="L56">        String username = jwtUtils.getUsername(token);</span>
+<span class="fc" id="L57">        List&lt;Integer&gt; appointedEvents = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L58">        List&lt;UserEvent&gt; appoints = userEventService.findUserEventByUserId(usersService.findUserByUsername(username).getUserId());</span>
+<span class="fc bfc" id="L59" title="All 2 branches covered.">        if (appoints.isEmpty()) {</span>
+<span class="fc" id="L60">            return ResponseEntity.status(HttpStatus.OK).body(eventService.findEventsAfterCurrentDate().stream()</span>
+<span class="fc" id="L61">                    .map(dtoService::convertToDTO).toList());</span>
+        }
+<span class="fc" id="L63">        double[] usrImg = new double[17];</span>
+<span class="fc" id="L64">        int cnt = 0;</span>
+<span class="fc bfc" id="L65" title="All 2 branches covered.">        for (UserEvent userEvent: appoints) {</span>
+<span class="fc" id="L66">            Event event = eventService.findByEventId(userEvent.getEventId());</span>
+<span class="fc" id="L67">            eventService.featureVector(event, usrImg);</span>
+<span class="fc" id="L68">            appointedEvents.add(event.getEventId());</span>
+<span class="fc" id="L69">            cnt++;</span>
+<span class="fc" id="L70">        }</span>
+<span class="fc bfc" id="L71" title="All 2 branches covered.">        for (int i = 0; i &lt; usrImg.length; i++) {</span>
+<span class="fc" id="L72">            usrImg[i] /= cnt;</span>
+        }
+<span class="fc" id="L74">        List&lt;Event&gt; recommend = eventService.recommend(appointedEvents, usrImg);</span>
+<span class="fc" id="L75">        List&lt;EventDTO&gt; eventDTOS = recommend.stream()</span>
+<span class="fc" id="L76">                .map(dtoService::convertToDTO).toList();</span>
+<span class="fc" id="L77">        return ResponseEntity.ok().body(eventDTOS);</span>
+    }
+
+
+    @PostMapping(&quot;/events_by_query&quot;)
+    @Transactional
+    public ResponseEntity&lt;List&lt;EventDTO&gt;&gt; getEvents(@RequestBody EventQuery query) {
+<span class="pc bpc" id="L84" title="1 of 2 branches missed.">        if (query.getOrganizerNames() != null) {</span>
+<span class="fc" id="L85">            List&lt;String&gt; organizerNames = query.getOrganizerNames();</span>
+<span class="fc" id="L86">            List&lt;Integer&gt; organizerIds = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L87" title="All 2 branches covered.">            for (String name : organizerNames) {</span>
+<span class="fc" id="L88">                Users user = usersService.findUserByUsername(name);</span>
+<span class="pc bpc" id="L89" title="1 of 2 branches missed.">                if(user != null) {</span>
+<span class="fc" id="L90">                    organizerIds.add(user.getUserId());</span>
+                }
+<span class="fc" id="L92">            }</span>
+<span class="fc" id="L93">            query.setOrganizerIds(organizerIds);</span>
+        }
+
+<span class="pc bpc" id="L96" title="1 of 2 branches missed.">        if (query.getVenueNames() != null) {</span>
+<span class="fc" id="L97">            List&lt;String&gt; venueNames = query.getVenueNames();</span>
+<span class="fc" id="L98">            List&lt;Integer&gt; venueIds = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L99" title="All 2 branches covered.">            for (String name : venueNames) {</span>
+<span class="fc" id="L100">                Venue venue = venueService.findByName(name);</span>
+<span class="pc bpc" id="L101" title="1 of 2 branches missed.">                if (venue != null) {</span>
+<span class="fc" id="L102">                    venueIds.add(venue.getVenueId());</span>
+                }
+<span class="fc" id="L104">            }</span>
+            //System.out.println(venueIds);
+<span class="fc" id="L106">            query.setVenueIds(venueIds);</span>
+        }
+<span class="fc" id="L108">        List&lt;Event&gt; events = eventService.findEventsByQuery(query);</span>
+<span class="fc" id="L109">        Date today = new Date();</span>
+<span class="fc" id="L110">        List&lt;Event&gt; filteredEvents = events.stream()</span>
+<span class="pc bnc" id="L111" title="All 4 branches missed.">                .filter(event -&gt; event.getDate().after(today) &amp;&amp; !&quot;approved&quot;.equals(event.getType().toString())).toList();</span>
+<span class="fc" id="L112">        List&lt;EventDTO&gt; eventDTOS = filteredEvents.stream()</span>
+<span class="fc" id="L113">                .map(dtoService::convertToDTO)</span>
+<span class="fc" id="L114">                .collect(Collectors.toList());</span>
+<span class="fc" id="L115">        return ResponseEntity.ok().body(eventDTOS);</span>
+    }
+
+    /**
+     * 获取指定ID活动
+     * @param eventId 活动ID
+     * @return 活动
+     */
+    @GetMapping(&quot;/events/{eventId}&quot;)
+    @Transactional
+    public ResponseEntity&lt;EventDTO&gt; getEventById(@PathVariable int eventId) {
+<span class="fc" id="L126">        Event event = eventService.findByEventId(eventId);</span>
+<span class="fc bfc" id="L127" title="All 2 branches covered.">        if (event == null) {</span>
+<span class="fc" id="L128">            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();</span>
+        }
+<span class="fc" id="L130">        return ResponseEntity.ok().body(dtoService.convertToDTO(event));</span>
+    }
+
+    /**
+     * 获取当前所有活动
+     * @return 活动列表
+     */
+    @GetMapping(&quot;/events&quot;)
+    @Transactional
+    public ResponseEntity&lt;List&lt;EventDTO&gt;&gt; getEventsAfterCurrentDate() {
+<span class="fc" id="L140">        List&lt;Event&gt; events = eventService.findEventsAfterCurrentDate();</span>
+<span class="fc" id="L141">        return ResponseEntity.status(HttpStatus.OK).body(events.stream()</span>
+<span class="fc" id="L142">                .map(dtoService::convertToDTO).toList());</span>
+    }
+
+
+    /**
+     * 超级用户获取待审核活动
+     * @param token token
+     * @return 待审核活动
+     */
+    @GetMapping(&quot;/superuser/events&quot;)
+    @Transactional
+    public ResponseEntity&lt;List&lt;Event&gt;&gt; getPendingEvents(@RequestHeader(&quot;Authorization&quot;) String token) {
+<span class="fc bfc" id="L154" title="All 2 branches covered.">        if (jwtUtils.validateSuperUser(token)) {</span>
+<span class="fc" id="L155">            List&lt;Event&gt; events = eventService.findPendingEvents();</span>
+<span class="fc" id="L156">            return ResponseEntity.ok().body(events);</span>
+        } else {
+<span class="fc" id="L158">            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();</span>
+        }
+    }
+
+    /**
+     * 超级用户审核活动
+     * @param token token
+     * @param event_id 活动id
+     * @return 审核结果
+     */
+    @PostMapping(&quot;/superuser/events/approve&quot;)
+    @Transactional
+    public ResponseEntity&lt;String&gt; approveEvent(@RequestHeader(&quot;Authorization&quot;) String token, @RequestParam(&quot;eventId&quot;) int event_id) {
+<span class="fc bfc" id="L171" title="All 2 branches covered.">        if (jwtUtils.validateSuperUser(token)) {</span>
+<span class="fc" id="L172">            return ResponseEntity.ok().body(eventService.approveEvent(event_id));</span>
+        } else {
+<span class="fc" id="L174">            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();</span>
+        }
+    }
+
+    /**
+     * 超级用户拒绝活动
+     * @param token token
+     * @param event_id 活动id
+     * @return 拒绝结果
+     */
+    @PostMapping( &quot;/superuser/events/reject&quot;)
+    @Transactional
+    public ResponseEntity&lt;String&gt; rejectEvent(@RequestHeader(&quot;Authorization&quot;) String token, @RequestParam(&quot;eventId&quot;) int event_id) {
+<span class="fc bfc" id="L187" title="All 2 branches covered.">        if (jwtUtils.validateSuperUser(token)) {</span>
+<span class="fc" id="L188">            return ResponseEntity.ok().body(eventService.rejectEvent(event_id));</span>
+        } else {
+<span class="fc" id="L190">            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();</span>
+        }
+    }
+
+    /**
+     * 超级用户或者活动组织者获取待审核活动
+     * @param token token
+     * @return  待审核活动
+     */
+    @PostMapping(&quot;/Appoint&quot;)
+    @Transactional
+    public ResponseEntity&lt;List&lt;UserEvent&gt;&gt; getAppoint(@RequestHeader(&quot;Authorization&quot;) String token, @RequestParam(&quot;eventId&quot;) int eventId) {
+<span class="fc bfc" id="L202" title="All 2 branches covered.">        if (!jwtUtils.validateToken(token)) {</span>
+<span class="fc" id="L203">            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();</span>
+        }
+<span class="fc" id="L205">        String username = jwtUtils.getUsername(token);</span>
+<span class="fc bfc" id="L206" title="All 4 branches covered.">        if(jwtUtils.validateSuperUser(token) || usersService.findUserByUsername(username).getUserId() == eventService.findByEventId(eventId).getOrganizerId()) {</span>
+<span class="fc" id="L207">            List&lt;UserEvent&gt; userEvents = userEventService.findUserEventByStatusAndEventId(&quot;pending&quot;, eventId);</span>
+<span class="fc" id="L208">            return ResponseEntity.ok().body(userEvents);</span>
+        } else {
+<span class="fc" id="L210">            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();</span>
+        }
+    }
+
+    /**
+     * 超级用户或者活动组织者批准预约
+     * @param token token
+     * @param user_event_id 预约id
+     * @return 批准结果
+     */
+    @PostMapping(&quot;/Appoint/approve&quot;)
+    @Transactional
+    public ResponseEntity&lt;String&gt; approveAppoint(@RequestHeader(&quot;Authorization&quot;) String token, @RequestParam(&quot;appointId&quot;) int user_event_id) {
+<span class="fc bfc" id="L223" title="All 2 branches covered.">        if (!jwtUtils.validateToken(token)) {</span>
+<span class="fc" id="L224">            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();</span>
+        }
+<span class="fc" id="L226">        String username = jwtUtils.getUsername(token);</span>
+<span class="fc bfc" id="L227" title="All 4 branches covered.">        if(jwtUtils.validateSuperUser(token) || usersService.findUserByUsername(username).getUserId() == userEventService.getEventOrganizerByUserEventId(user_event_id)) {</span>
+<span class="fc" id="L228">            return ResponseEntity.ok().body(userEventService.approveAppoint(user_event_id));</span>
+        } else {
+<span class="fc" id="L230">            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();</span>
+        }
+    }
+
+    /**
+     * 超级用户或者活动组织者拒绝预约
+     * @param token token
+     * @param user_event_id 预约id
+     * @return 拒绝结果
+     */
+    @PostMapping(&quot;/Appoint/reject&quot;)
+    @Transactional
+    public ResponseEntity&lt;String&gt; rejectAppoint(@RequestHeader(&quot;Authorization&quot;) String token, @RequestParam(&quot;appointId&quot;) int user_event_id) {
+<span class="fc bfc" id="L243" title="All 2 branches covered.">        if (!jwtUtils.validateToken(token)) {</span>
+<span class="fc" id="L244">            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();</span>
+        }
+<span class="fc" id="L246">        String username = jwtUtils.getUsername(token);</span>
+<span class="fc bfc" id="L247" title="All 4 branches covered.">        if(jwtUtils.validateSuperUser(token) || usersService.findUserByUsername(username).getUserId() == userEventService.getEventOrganizerByUserEventId(user_event_id)) {</span>
+<span class="fc" id="L248">            return ResponseEntity.ok().body(userEventService.rejectAppoint(user_event_id));</span>
+        } else {
+<span class="fc" id="L250">            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();</span>
+        }
+    }
+
+
+    /**
+     * 返回指定日期的活动
+     * @param dateString 日期
+     * @return 活动列表
+     * @throws ParseException 日期解析异常
+     */
+    @GetMapping(&quot;/events/by-date&quot;)
+    @Transactional
+    public ResponseEntity&lt;List&lt;EventDTO&gt;&gt; getEventsOnDate(@RequestParam(&quot;date&quot;) String dateString) throws ParseException {
+<span class="fc" id="L264">        Date date = new SimpleDateFormat(&quot;yyyy-MM-dd&quot;).parse(dateString);</span>
+<span class="fc" id="L265">        List&lt;Event&gt; events = eventService.findEventsOnDate(date);</span>
+<span class="fc" id="L266">        return ResponseEntity.ok().body(events.stream()</span>
+<span class="fc" id="L267">                .map(dtoService::convertToDTO).toList());</span>
+    }
+
+    /**
+     * AI-generated-content
+     * tool: chatGpt
+     * version: 3.5
+     * usage: 用来给出范例，学习了相关语法，并根据需要重写了validateEvent
+     * 创建活动
+     * @param token token
+     * @param event 活动
+     * @return 创建结果
+     */
+    @PostMapping(&quot;/events&quot;)
+    @Transactional
+    public ResponseEntity&lt;Map&lt;String, String&gt;&gt; createEvent(@RequestHeader(&quot;Authorization&quot;) String token, @RequestBody Event event) {
+<span class="fc bfc" id="L283" title="All 2 branches covered.">        if (!jwtUtils.validateToken(token)) {</span>
+<span class="fc" id="L284">            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();</span>
+        }
+
+<span class="fc" id="L287">        Map&lt;String, String&gt; response = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L288">        String error = validateEvent(event);</span>
+<span class="fc" id="L289">        event.setOrganizerId(usersService.findUserByUsername(jwtUtils.getUsername(token)).getUserId());</span>
+<span class="fc" id="L290">        System.out.println(event.getOrganizerId());</span>
+<span class="fc bfc" id="L291" title="All 2 branches covered.">        if (error != null) {</span>
+<span class="fc" id="L292">            response.put(&quot;message&quot;, error);</span>
+<span class="fc" id="L293">            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);</span>
+        }
+
+<span class="fc" id="L296">        eventService.saveEvent(event);</span>
+<span class="fc" id="L297">        response.put(&quot;message&quot;, &quot;活动创建成功，请等待审核&quot;);</span>
+<span class="fc" id="L298">        return ResponseEntity.status(HttpStatus.CREATED).body(response);</span>
+    }
+
+
+
+    /**
+     * 用于验证一个活动是否合规
+     * @param event 活动
+     * @return 错误信息
+     */
+    private String validateEvent(Event event) {
+<span class="pc bpc" id="L309" title="1 of 4 branches missed.">        if(event.getTitle() == null || event.getTitle().isEmpty()) return &quot;需要标题&quot;;</span>
+<span class="fc bfc" id="L310" title="All 2 branches covered.">        if(event.getDate() == null) return &quot;需要日期&quot;;</span>
+<span class="fc bfc" id="L311" title="All 2 branches covered.">        if(event.getStartTime() == null) return &quot;需要起始时间&quot;;</span>
+<span class="fc bfc" id="L312" title="All 2 branches covered.">        if(event.getEndTime() == null) return &quot;需要结束时间&quot;;</span>
+<span class="fc" id="L313">        event.setType(Event.EventType.pending);</span>
+<span class="fc" id="L314">        Venue venue = venueService.findByVenueId(event.getVenueId());</span>
+<span class="fc bfc" id="L315" title="All 2 branches covered.">        if(venue == null) return &quot;无效区域&quot;;</span>
+<span class="fc bfc" id="L316" title="All 2 branches covered.">        if(event.getCapacityLimit() == null) {</span>
+<span class="fc" id="L317">            event.setCapacityLimit(venue.getCapacity());</span>
+<span class="pc bpc" id="L318" title="1 of 2 branches missed.">            event.setRemaining(venue.getCapacity() &lt; event.getCapacityLimit() ? venue.getCapacity() : event.getCapacityLimit());</span>
+<span class="pc bpc" id="L319" title="1 of 2 branches missed.">        } else if(event.getCapacityLimit() &gt; venue.getCapacity()) {</span>
+<span class="fc" id="L320">            return &quot;容量超限&quot;;</span>
+<span class="nc" id="L321">        } else event.setRemaining(event.getCapacityLimit());</span>
+<span class="fc" id="L322">        return null;</span>
+    }
+
+    /**
+     * 预约活动
+     * @param token token
+     * @param eventId 活动id
+     * @return 预约结果
+     */
+    @PostMapping(&quot;/events/appoint&quot;)
+    @Transactional
+    public ResponseEntity&lt;Map&lt;String, String&gt;&gt; appoint(@RequestHeader(&quot;Authorization&quot;) String token, @RequestParam(&quot;eventId&quot;) int eventId) {
+<span class="fc" id="L334">        userEventService.reserveEvent(usersService.findUserByUsername(jwtUtils.getUsername(token)).getUserId(), eventId);</span>
+<span class="fc" id="L335">        Map&lt;String, String&gt; response = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L336">        response.put(&quot;message&quot;, &quot;预约成功&quot;);</span>
+<span class="fc" id="L337">        return ResponseEntity.status(HttpStatus.OK).body(response);</span>
+    }
+
+    /**
+     * 登录用户获取历史活动(自己的历史记录)
+     * @param token token
+     * @return 历史活动
+     */
+    @PostMapping(&quot;/userAppoint&quot;)
+    @Transactional
+    public ResponseEntity&lt;List&lt;UserEventDTO&gt;&gt; getUserHistoryEvents(@RequestHeader(&quot;Authorization&quot;) String token) {
+<span class="fc bfc" id="L348" title="All 2 branches covered.">        if (!jwtUtils.validateToken(token)) {</span>
+<span class="fc" id="L349">            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();</span>
+        }
+<span class="fc" id="L351">        String username = jwtUtils.getUsername(token);</span>
+<span class="fc" id="L352">        List&lt;UserEvent&gt; appoints = userEventService.findUserEventByUserId(usersService.findUserByUsername(username).getUserId());</span>
+<span class="fc" id="L353">        List&lt;UserEventDTO&gt; appointDTO = appoints.stream().map(userEvent -&gt;</span>
+<span class="pc" id="L354">                new UserEventDTO(userEvent, dtoService.getEventDTO(userEvent.getEventId()))).collect(Collectors.toList());</span>
+<span class="fc" id="L355">        return ResponseEntity.ok().body(appointDTO);</span>
+    }
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.9.202303310957</span></div></body></html>

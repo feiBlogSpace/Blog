@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UsersController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">CampusEventsAndEntertainmentCenter</a> &gt; <a href="index.source.html" class="el_package">com.team20.backend.controller</a> &gt; <span class="el_source">UsersController.java</span></div><h1>UsersController.java</h1><pre class="source lang-java linenums">package com.team20.backend.controller;
+
+import com.team20.backend.dto.UserDTO;
+import com.team20.backend.model.user.Follow;
+import com.team20.backend.model.user.Users;
+import com.team20.backend.service.DTOService;
+import com.team20.backend.service.FollowService;
+import com.team20.backend.util.JwtUtils;
+import jakarta.annotation.Resource;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import com.team20.backend.service.UsersService;
+
+import java.util.List;
+
+
+@Controller
+<span class="fc" id="L26">public class UsersController {</span>
+    @Autowired
+    private UsersService usersService;
+    @Autowired
+    private FollowService followService;
+    @Autowired
+    private DTOService dtoService;
+    @Resource
+    private JwtUtils jwtUtils;
+    @GetMapping(&quot;/signup&quot;)
+    public ResponseEntity&lt;String&gt; signupForm() {
+<span class="nc" id="L37">        return ResponseEntity.ok().body(&quot;注册&quot;);</span>
+    }
+
+    /**
+     * AI-generated-content
+     * tool: chatGpt
+     * version: 3.5
+     * usage: 注册和登录返回的json格式参考ai生成
+     * 注册
+     * @param username 用户名
+     * @param email 邮箱
+     * @param password 密码
+     * @return 注册成功返回token，失败返回错误信息
+     */
+    @PostMapping(&quot;/signup&quot;)
+    @Transactional
+    public ResponseEntity&lt;String&gt; signUp(@RequestParam String username,
+                                         @RequestParam String email,
+                                         @RequestParam String password) {
+<span class="fc" id="L56">        Users user = usersService.register(username, email, password);</span>
+<span class="fc bfc" id="L57" title="All 2 branches covered.">        if (user != null) {</span>
+<span class="fc" id="L58">            String token = jwtUtils.generateToken(user);</span>
+<span class="fc" id="L59">            return ResponseEntity.ok().body(token);</span>
+        } else {
+<span class="fc" id="L61">            return ResponseEntity.badRequest().body(&quot;用户名或邮箱已存在&quot;);</span>
+        }
+    }
+
+
+    /**
+     * 登录
+     * @param username 用户名
+     * @param password 密码
+     * @return 登录成功返回token，失败返回错误信息
+     */
+    @PostMapping(&quot;/signin&quot;)
+    @Transactional
+    public ResponseEntity&lt;String&gt; signIn(@RequestParam String username,
+                                         @RequestParam String password) {
+<span class="fc" id="L76">        Users user = usersService.login(username, password);</span>
+        //System.out.println(&quot;response: &quot; + response);
+<span class="fc bfc" id="L78" title="All 2 branches covered.">        if (user != null) {</span>
+<span class="fc" id="L79">            String token = jwtUtils.generateToken(user);</span>
+<span class="fc" id="L80">            return ResponseEntity.ok().body(token);</span>
+        } else {
+<span class="fc" id="L82">            return ResponseEntity.badRequest().body(&quot;用户名或密码错误&quot;);</span>
+        }
+    }
+
+    /**
+     * 获取用户信息
+     * @param token token
+     * @return 用户信息
+     */
+    @GetMapping(&quot;/user_info&quot;)
+    @Transactional
+    public ResponseEntity&lt;Users&gt; getUserInfo(@RequestParam String token) {
+<span class="fc" id="L94">        Users user = usersService.findUserByUsername(jwtUtils.getUsername(token));</span>
+<span class="fc bfc" id="L95" title="All 2 branches covered.">        if (user != null) {</span>
+<span class="fc" id="L96">            return ResponseEntity.ok().body(user);</span>
+        } else {
+<span class="fc" id="L98">            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);</span>
+        }
+    }
+
+    /**
+     * 获取用户信息
+     * @param userId 用户id
+     * @return 用户信息
+     */
+    @GetMapping(&quot;/user_info_byId&quot;)
+    @Transactional
+    public ResponseEntity&lt;Users&gt; getUserInfoById(@RequestParam int userId) {
+<span class="nc" id="L110">        Users user = usersService.findUserById(userId);</span>
+<span class="nc bnc" id="L111" title="All 2 branches missed.">        if (user != null) {</span>
+<span class="nc" id="L112">            return ResponseEntity.ok().body(user);</span>
+        } else {
+<span class="nc" id="L114">            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);</span>
+        }
+    }
+
+    /**
+     * 关注用户
+     * @param token token
+     * @param followeeId 被关注者id
+     * @return 关注结果
+     */
+    @PostMapping(&quot;/follow&quot;)
+    @Transactional
+    public ResponseEntity&lt;String&gt; follow(@RequestHeader(&quot;Authorization&quot;) String token, @RequestParam int followeeId) {
+<span class="fc bfc" id="L127" title="All 2 branches covered.">        if (!jwtUtils.validateToken(token)) {</span>
+<span class="fc" id="L128">            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();</span>
+        }
+
+<span class="fc" id="L131">        int followerId = usersService.findUserByUsername(jwtUtils.getUsername(token)).getUserId();</span>
+<span class="fc" id="L132">        followService.follow(followerId, followeeId);</span>
+
+<span class="fc" id="L134">        return ResponseEntity.status(HttpStatus.OK).body(&quot;关注成功&quot;);</span>
+    }
+
+    /**
+     * 取消关注用户
+     * @param token token
+     * @param followeeId 被关注者id
+     * @return 取消关注结果
+     */
+    @PostMapping(&quot;/unfollow&quot;)
+    @Transactional
+    public ResponseEntity&lt;String&gt; unfollow(@RequestHeader(&quot;Authorization&quot;) String token, @RequestParam int followeeId) {
+<span class="fc bfc" id="L146" title="All 2 branches covered.">        if (!jwtUtils.validateToken(token)) {</span>
+<span class="fc" id="L147">            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();</span>
+        }
+
+<span class="fc" id="L150">        int followerId = usersService.findUserByUsername(jwtUtils.getUsername(token)).getUserId();</span>
+<span class="fc" id="L151">        followService.unfollow(followerId, followeeId);</span>
+
+<span class="fc" id="L153">        return ResponseEntity.status(HttpStatus.OK).body(&quot;取消关注成功&quot;);</span>
+    }
+
+
+    /**
+     * 获取粉丝列表
+     * @param token token
+     * @return 粉丝列表
+     */
+    @GetMapping(&quot;/followers&quot;)
+    public ResponseEntity&lt;List&lt;UserDTO&gt;&gt; getFollowers(@RequestHeader(&quot;Authorization&quot;) String token) {
+<span class="fc bfc" id="L164" title="All 2 branches covered.">        if (!jwtUtils.validateToken(token)) {</span>
+<span class="fc" id="L165">            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();</span>
+        }
+
+<span class="fc" id="L168">        int userId = usersService.findUserByUsername(jwtUtils.getUsername(token)).getUserId();</span>
+<span class="fc" id="L169">        List&lt;Follow&gt; followers = followService.getFollowers(userId);</span>
+<span class="fc" id="L170">        List&lt;UserDTO&gt; userDTOs = followers.stream().map(follow -&gt;</span>
+<span class="fc" id="L171">            dtoService.getUserDTO(follow.getFollowerId())</span>
+<span class="fc" id="L172">        ).toList();</span>
+<span class="fc" id="L173">        return ResponseEntity.status(HttpStatus.OK).body(userDTOs);</span>
+    }
+
+    /**
+     * 获取关注者列表
+     * @param token token
+     * @return 关注者列表
+     */
+    @GetMapping(&quot;/followees&quot;)
+    public ResponseEntity&lt;List&lt;UserDTO&gt;&gt; getFollowees(@RequestHeader(&quot;Authorization&quot;) String token) {
+<span class="pc bpc" id="L183" title="1 of 2 branches missed.">        if (!jwtUtils.validateToken(token)) {</span>
+<span class="fc" id="L184">            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();</span>
+        }
+
+<span class="nc" id="L187">        int userId = usersService.findUserByUsername(jwtUtils.getUsername(token)).getUserId();</span>
+<span class="nc" id="L188">        List&lt;Follow&gt; followees = followService.getFollowees(userId);</span>
+<span class="nc" id="L189">        List&lt;UserDTO&gt; userDTOs = followees.stream().map(follow -&gt;</span>
+<span class="nc" id="L190">                dtoService.getUserDTO(follow.getFolloweeId())</span>
+<span class="nc" id="L191">        ).toList();</span>
+<span class="nc" id="L192">        return ResponseEntity.status(HttpStatus.OK).body(userDTOs);</span>
+    }
+
+    /**
+     * 判断指定用户是否关注
+     * @param token token
+     * @param user_id 用户id
+     * @return 是否关注
+     */
+    @GetMapping(&quot;/is_following&quot;)
+    public ResponseEntity&lt;Boolean&gt; isFollowing(@RequestHeader(&quot;Authorization&quot;) String token, @RequestParam int user_id) {
+<span class="nc bnc" id="L203" title="All 2 branches missed.">        if (!jwtUtils.validateToken(token)) {</span>
+<span class="nc" id="L204">            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();</span>
+        }
+<span class="nc" id="L206">        Follow follow = followService.getByFollowerIdAndFolloweeId(usersService.findUserByUsername(jwtUtils.getUsername(token)).getUserId(), user_id);</span>
+<span class="nc bnc" id="L207" title="All 2 branches missed.">        return ResponseEntity.status(HttpStatus.OK).body(follow != null);</span>
+    }
+
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.9.202303310957</span></div></body></html>

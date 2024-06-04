@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ForumReply.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">CampusEventsAndEntertainmentCenter</a> &gt; <a href="index.source.html" class="el_package">com.team20.backend.model.forum</a> &gt; <span class="el_source">ForumReply.java</span></div><h1>ForumReply.java</h1><pre class="source lang-java linenums">package com.team20.backend.model.forum;
+
+import jakarta.persistence.*;
+import java.util.Date;
+
+@Entity
+@Table(name = &quot;forum_reply&quot;)
+<span class="fc" id="L8">public class ForumReply {</span>
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = &quot;id&quot;)
+    private int id;
+
+    public int getParentId() {
+<span class="fc" id="L16">        return parentId;</span>
+    }
+
+    public void setParentId(int parentId) {
+<span class="fc" id="L20">        this.parentId = parentId;</span>
+<span class="fc" id="L21">    }</span>
+
+    @ManyToOne
+    @JoinColumn(name = &quot;topic_id&quot;, nullable = false)
+    private ForumTopic forumTopic;
+
+    @Column(name = &quot;content&quot;, nullable = false)
+    private String content;
+
+    @Column(name = &quot;like_num&quot;, nullable = false)
+    private int likeNum;
+
+    @Column(name = &quot;user_id&quot;, nullable = false)
+    private int userId;
+
+    @Column(name = &quot;post_time&quot;)
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date postTime;
+
+    @Column(name = &quot;parent_id&quot;)
+    private int parentId;
+
+    // Getters and Setters
+    public int getId() {
+<span class="nc" id="L45">        return id;</span>
+    }
+
+    public void setId(int id) {
+<span class="fc" id="L49">        this.id = id;</span>
+<span class="fc" id="L50">    }</span>
+
+    public ForumTopic getForumTopic() {
+<span class="fc" id="L53">        return forumTopic;</span>
+    }
+
+    public void setForumTopic(ForumTopic forumTopic) {
+<span class="fc" id="L57">        this.forumTopic = forumTopic;</span>
+<span class="fc" id="L58">    }</span>
+
+    public int getLikeNum() {
+<span class="nc" id="L61">        return likeNum;</span>
+    }
+
+    public void setLikeNum(int likeNum) {
+<span class="fc" id="L65">        this.likeNum = likeNum;</span>
+<span class="fc" id="L66">    }</span>
+
+    public String getContent() {
+<span class="nc" id="L69">        return content;</span>
+    }
+
+    public void setContent(String content) {
+<span class="fc" id="L73">        this.content = content;</span>
+<span class="fc" id="L74">    }</span>
+
+    public int getUserId() {
+<span class="fc" id="L77">        return userId;</span>
+    }
+
+    public void setUserId(int userId) {
+<span class="fc" id="L81">        this.userId = userId;</span>
+<span class="fc" id="L82">    }</span>
+
+    public Date getPostTime() {
+<span class="nc" id="L85">        return postTime;</span>
+    }
+
+    public void setPostTime(Date postTime) {
+<span class="fc" id="L89">        this.postTime = postTime;</span>
+<span class="fc" id="L90">    }</span>
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.9.202303310957</span></div></body></html>

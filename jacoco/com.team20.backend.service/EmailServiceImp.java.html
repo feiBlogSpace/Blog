@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EmailServiceImp.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">CampusEventsAndEntertainmentCenter</a> &gt; <a href="index.source.html" class="el_package">com.team20.backend.service</a> &gt; <span class="el_source">EmailServiceImp.java</span></div><h1>EmailServiceImp.java</h1><pre class="source lang-java linenums">package com.team20.backend.service;
+
+
+import com.team20.backend.model.ChatMessage;
+import com.team20.backend.model.Email;
+import com.team20.backend.model.Event;
+import com.team20.backend.model.UserEvent;
+import com.team20.backend.model.forum.ForumReply;
+import com.team20.backend.model.forum.ForumTopic;
+import com.team20.backend.model.user.Users;
+import com.team20.backend.repository.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import java.sql.Timestamp;
+import java.util.List;
+
+@Service
+<span class="fc" id="L18">public class EmailServiceImp implements EmailService{</span>
+
+    @Autowired
+    private EmailRepository emailRepository;
+    @Autowired
+    private UsersRepository usersRepository;
+    @Autowired
+    private EventRepository eventRepository;
+    @Autowired
+    private UserEventRepository userEventRepository;
+    @Autowired
+    private ForumTopicRepository forumTopicRepository;
+    @Autowired
+    private ForumReplyRepository forumReplyRepository;
+
+    @Override
+    public List&lt;Email&gt; getEmailsByUserId(int userId) {
+<span class="fc" id="L35">        return emailRepository.findByUserID(userId);</span>
+    }
+    @Override
+    public void markEmailAsRead(int emailId) {
+<span class="fc" id="L39">        Email email = emailRepository.findById(emailId).orElse(null);</span>
+<span class="pc bpc" id="L40" title="1 of 2 branches missed.">        if (email != null) {</span>
+<span class="fc" id="L41">            email.setStatus(Email.EmailStatus.read);</span>
+<span class="fc" id="L42">            emailRepository.save(email);</span>
+        }
+<span class="fc" id="L44">    }</span>
+    @Override
+    public void markEmailAsDeleted(int emailId){
+<span class="fc" id="L47">        Email email = emailRepository.findById(emailId).orElse(null);</span>
+<span class="pc bpc" id="L48" title="1 of 2 branches missed.">        if (email != null) {</span>
+<span class="fc" id="L49">            email.setStatus(Email.EmailStatus.deleted);</span>
+<span class="fc" id="L50">            emailRepository.save(email);</span>
+        }
+<span class="fc" id="L52">    }</span>
+    @Override
+    public void registrationApprovedEmail(int user_event_id) {
+<span class="fc" id="L55">        Email email = new Email();</span>
+<span class="fc" id="L56">        UserEvent userEvent = userEventRepository.findUserEventById(user_event_id);</span>
+<span class="fc" id="L57">        email.setUserID(userEvent.getUserId());</span>
+<span class="fc" id="L58">        email.setSubject(&quot;活动报名成功通知&quot;);</span>
+<span class="fc" id="L59">        Users user = usersRepository.findUserByUserId(userEvent.getUserId());</span>
+<span class="fc" id="L60">        Event event = eventRepository.findByEventId(userEvent.getEventId());</span>
+<span class="fc" id="L61">        email.setBody(user.getUsername()+&quot;,您已成功报名&quot;+event.getTitle()+&quot;。&quot;);</span>
+<span class="fc" id="L62">        email.setTime(new Timestamp(System.currentTimeMillis()));</span>
+<span class="fc" id="L63">        email.setStatus(Email.EmailStatus.unread);</span>
+<span class="fc" id="L64">        emailRepository.save(email);</span>
+<span class="fc" id="L65">    }</span>
+
+    @Override
+    public void PrivateChatMessage(ChatMessage chatMessage) {
+<span class="fc" id="L69">        Email email = new Email();</span>
+<span class="fc" id="L70">        email.setUserID(usersRepository.findUserByUsername(chatMessage.getReceiver()).getUserId());</span>
+<span class="fc" id="L71">        email.setSubject(chatMessage.getSender()+&quot;给您发送了私信&quot;);</span>
+<span class="fc" id="L72">        email.setBody(chatMessage.getContent());</span>
+<span class="fc" id="L73">        email.setTime(new Timestamp(System.currentTimeMillis()));</span>
+<span class="fc" id="L74">        email.setStatus(Email.EmailStatus.unread);</span>
+<span class="fc" id="L75">        emailRepository.save(email);</span>
+<span class="fc" id="L76">    }</span>
+
+    @Override
+    public void registrationRejectedEmail(int user_event_id){
+<span class="fc" id="L80">        Email email = new Email();</span>
+<span class="fc" id="L81">        UserEvent userEvent = userEventRepository.findUserEventById(user_event_id);</span>
+<span class="fc" id="L82">        email.setUserID(userEvent.getUserId());</span>
+<span class="fc" id="L83">        email.setSubject(&quot;活动报名失败通知&quot;);</span>
+<span class="fc" id="L84">        Users user = usersRepository.findUserByUserId(userEvent.getUserId());</span>
+<span class="fc" id="L85">        Event event = eventRepository.findByEventId(userEvent.getEventId());</span>
+<span class="fc" id="L86">        email.setBody(user.getUsername()+&quot;,很遗憾的通知您，您未能报名&quot;+event.getTitle()+&quot;。&quot;);</span>
+<span class="fc" id="L87">        email.setTime(new Timestamp(System.currentTimeMillis()));</span>
+<span class="fc" id="L88">        email.setStatus(Email.EmailStatus.unread);</span>
+<span class="fc" id="L89">        emailRepository.save(email);</span>
+<span class="fc" id="L90">    }</span>
+
+    @Override
+    public void eventApprovedEmail(int event_id) {
+<span class="fc" id="L94">        Email email = new Email();</span>
+<span class="fc" id="L95">        Event event = eventRepository.findByEventId(event_id);</span>
+<span class="fc" id="L96">        email.setUserID(event.getOrganizerId());</span>
+<span class="fc" id="L97">        email.setSubject(&quot;活动审核通过通知&quot;);</span>
+<span class="fc" id="L98">        Users user = usersRepository.findUserByUserId(event.getOrganizerId());</span>
+<span class="fc" id="L99">        email.setBody(user.getUsername()+&quot;,您发起的&quot;+event.getTitle()+&quot;已经审核通过。&quot;);</span>
+<span class="fc" id="L100">        email.setTime(new Timestamp(System.currentTimeMillis()));</span>
+<span class="fc" id="L101">        email.setStatus(Email.EmailStatus.unread);</span>
+<span class="fc" id="L102">        emailRepository.save(email);</span>
+<span class="fc" id="L103">    }</span>
+
+    @Override
+    public void eventRejectedEmail(int event_id) {
+<span class="fc" id="L107">        Email email = new Email();</span>
+<span class="fc" id="L108">        Event event = eventRepository.findByEventId(event_id);</span>
+<span class="fc" id="L109">        email.setUserID(event.getOrganizerId());</span>
+<span class="fc" id="L110">        email.setSubject(&quot;活动审核失败通知&quot;);</span>
+<span class="fc" id="L111">        Users user = usersRepository.findUserByUserId(event.getOrganizerId());</span>
+<span class="fc" id="L112">        email.setBody(user.getUsername()+&quot;,您发起的&quot;+event.getTitle()+&quot;未能通过审核。&quot;);</span>
+<span class="fc" id="L113">        email.setTime(new Timestamp(System.currentTimeMillis()));</span>
+<span class="fc" id="L114">        email.setStatus(Email.EmailStatus.unread);</span>
+<span class="fc" id="L115">        emailRepository.save(email);</span>
+<span class="fc" id="L116">    }</span>
+
+    @Override
+    public void followEmail(int followeeId,int followerId){
+<span class="fc" id="L120">        Email email = new Email();</span>
+<span class="fc" id="L121">        email.setUserID(followeeId);</span>
+<span class="fc" id="L122">        email.setSubject(&quot;被关注通知&quot;);</span>
+<span class="fc" id="L123">        Users follower = usersRepository.findUserByUserId(followerId);</span>
+<span class="fc" id="L124">        Users followee = usersRepository.findUserByUserId(followeeId);</span>
+<span class="fc" id="L125">        email.setBody(followee.getUsername()+&quot;,您已被用户：&quot;+follower.getUsername()+&quot;关注。&quot;);</span>
+<span class="fc" id="L126">        email.setTime(new Timestamp(System.currentTimeMillis()));</span>
+<span class="fc" id="L127">        email.setStatus(Email.EmailStatus.unread);</span>
+<span class="fc" id="L128">        emailRepository.save(email);</span>
+<span class="fc" id="L129">    }</span>
+
+    @Override
+    public void replyEmail(int replieeId,int replierId){
+<span class="fc" id="L133">        Email email = new Email();</span>
+<span class="fc" id="L134">        email.setUserID(replieeId);</span>
+<span class="fc" id="L135">        email.setSubject(&quot;被回复通知&quot;);</span>
+<span class="fc" id="L136">        Users replier = usersRepository.findUserByUserId(replierId);</span>
+<span class="fc" id="L137">        Users repliee = usersRepository.findUserByUserId(replieeId);</span>
+<span class="fc" id="L138">        email.setBody(repliee.getUsername()+&quot;,您已被用户：&quot;+replier.getUsername()+&quot;回复。&quot;);</span>
+<span class="fc" id="L139">        email.setTime(new Timestamp(System.currentTimeMillis()));</span>
+<span class="fc" id="L140">        email.setStatus(Email.EmailStatus.unread);</span>
+<span class="fc" id="L141">        emailRepository.save(email);</span>
+<span class="fc" id="L142">    }</span>
+    @Override
+    public void addStarEmail(int userId, int topicId){
+<span class="fc" id="L145">        Email email = new Email();</span>
+<span class="fc" id="L146">        ForumTopic forumTopic=forumTopicRepository.findById(topicId);</span>
+<span class="fc" id="L147">        email.setUserID(forumTopic.getUserId());</span>
+<span class="fc" id="L148">        email.setSubject(&quot;话题被收藏通知&quot;);</span>
+<span class="fc" id="L149">        Users liker = usersRepository.findUserByUserId(userId);</span>
+<span class="fc" id="L150">        Users likee = usersRepository.findUserByUserId(forumTopic.getUserId());</span>
+<span class="fc" id="L151">        email.setBody(likee.getUsername()+&quot;,您的帖子被用户：&quot;+liker.getUsername()+&quot;收藏了。&quot;);</span>
+<span class="fc" id="L152">        email.setTime(new Timestamp(System.currentTimeMillis()));</span>
+<span class="fc" id="L153">        email.setStatus(Email.EmailStatus.unread);</span>
+<span class="fc" id="L154">        emailRepository.save(email);</span>
+<span class="fc" id="L155">    }</span>
+
+    @Override
+    public void likeReplyEmail(int userId, int replyId){
+<span class="fc" id="L159">        Email email = new Email();</span>
+<span class="fc" id="L160">        ForumReply forumReply=forumReplyRepository.findById(replyId);</span>
+<span class="fc" id="L161">        email.setUserID(forumReply.getUserId());</span>
+<span class="fc" id="L162">        email.setSubject(&quot;回复被点赞通知&quot;);</span>
+<span class="fc" id="L163">        Users liker = usersRepository.findUserByUserId(userId);</span>
+<span class="fc" id="L164">        Users likee = usersRepository.findUserByUserId(forumReply.getUserId());</span>
+<span class="fc" id="L165">        email.setBody(likee.getUsername()+&quot;,您的回复被用户：&quot;+liker.getUsername()+&quot;点赞了。&quot;);</span>
+<span class="fc" id="L166">        email.setTime(new Timestamp(System.currentTimeMillis()));</span>
+<span class="fc" id="L167">        email.setStatus(Email.EmailStatus.unread);</span>
+<span class="fc" id="L168">        emailRepository.save(email);</span>
+<span class="fc" id="L169">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.9.202303310957</span></div></body></html>

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DTOServiceImp.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">CampusEventsAndEntertainmentCenter</a> &gt; <a href="index.source.html" class="el_package">com.team20.backend.service</a> &gt; <span class="el_source">DTOServiceImp.java</span></div><h1>DTOServiceImp.java</h1><pre class="source lang-java linenums">package com.team20.backend.service;
+
+import com.team20.backend.dto.*;
+import com.team20.backend.model.Event;
+import com.team20.backend.model.forum.ForumReply;
+import com.team20.backend.model.history.Comment;
+import com.team20.backend.repository.ForumReplyRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+<span class="fc" id="L16">public class DTOServiceImp implements DTOService{</span>
+    @Autowired
+    private UsersService usersService;
+    @Autowired
+    private EventService eventService;
+    @Autowired
+    private CommentService commentService;
+    @Autowired
+    private AvatarService avatarService;
+    @Autowired
+    private ForumService forumService;
+    @Autowired
+    private ForumReplyRepository forumReplyRepository;
+    @Override
+    public UserDTO getUserDTO(int userId) {
+<span class="fc" id="L31">        return new UserDTO(usersService.findUserById(userId), avatarService.findApprovedAvatarByUserId(userId).getAvatarData());</span>
+    }
+
+    @Override
+    public EventCommentDTO getEventCommentDTO(int eventId) {
+<span class="nc" id="L36">        return new EventCommentDTO(getEventDTO(eventId),commentService.findCommentsByEventId(eventId));</span>
+    }
+    @Override
+    public EventDTO getEventDTO(int eventId) {
+<span class="fc" id="L40">        Event event = eventService.findByEventId(eventId);</span>
+<span class="fc" id="L41">        UserDTO user = getUserDTO(event.getOrganizerId());</span>
+<span class="fc" id="L42">        return new EventDTO(user, event);</span>
+    }
+    @Override
+    public ForumReplyDTO getForumReplyDTO(int replyId) {
+<span class="nc" id="L46">        ForumReply forumReply = forumReplyRepository.findById(replyId);</span>
+<span class="nc" id="L47">        return new ForumReplyDTO(forumReply, getUserDTO(forumReply.getUserId()));</span>
+    }
+    @Override
+    public TopicUserDTO getTopicUserDTO(int topicId) {
+<span class="nc" id="L51">        return new TopicUserDTO(forumService.findForumTopicById(topicId), getUserDTO(forumService.findForumTopicById(topicId).getUserId()));</span>
+    }
+    @Override
+    public TopicDTO getTopicDTO(int topicId) {
+<span class="nc" id="L55">        return new TopicDTO(getTopicUserDTO(topicId), getForumReplies(topicId));</span>
+    }
+    @Override
+    public EventDTO convertToDTO(Event event) {
+<span class="nc" id="L59">        UserDTO user = getUserDTO(event.getOrganizerId());</span>
+<span class="nc" id="L60">        return new EventDTO(user, event);</span>
+    }
+    @Override
+    public ForumReplyDTO convertToDTO(ForumReply forumReply) {
+<span class="nc" id="L64">        return new ForumReplyDTO(forumReply, getUserDTO(forumReply.getUserId()));</span>
+    }
+
+    @Override
+    public List&lt;ForumReplyDTO&gt; getForumReplies(int topicId) {
+<span class="nc" id="L69">        List&lt;ForumReply&gt; forumReplies = forumReplyRepository.findByForumTopicId(topicId);</span>
+<span class="nc" id="L70">        return forumReplies.stream().</span>
+<span class="nc bnc" id="L71" title="All 2 branches missed.">                filter(forumReply -&gt; forumReply.getParentId() == 0)</span>
+<span class="nc" id="L72">                .map(this::convertToDTO)</span>
+<span class="nc" id="L73">                .collect(Collectors.toList());</span>
+    }
+    @Override
+    public List&lt;ForumReplyDTO&gt; getForumRepliesByReplyId(int replyId) {
+<span class="nc" id="L77">        List&lt;ForumReply&gt; forumReplies = forumReplyRepository.findByParentId(replyId);</span>
+<span class="nc" id="L78">        return forumReplies.stream().</span>
+<span class="nc" id="L79">                map(this::convertToDTO)</span>
+<span class="nc" id="L80">                .collect(Collectors.toList());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.9.202303310957</span></div></body></html>

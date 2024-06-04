@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>HistoryEventController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">CampusEventsAndEntertainmentCenter</a> &gt; <a href="index.source.html" class="el_package">com.team20.backend.controller</a> &gt; <span class="el_source">HistoryEventController.java</span></div><h1>HistoryEventController.java</h1><pre class="source lang-java linenums">package com.team20.backend.controller;
+
+import com.team20.backend.dto.*;
+import com.team20.backend.model.*;
+import com.team20.backend.model.history.Comment;
+import com.team20.backend.model.user.Users;
+import com.team20.backend.service.*;
+import com.team20.backend.util.JwtUtils;
+import jakarta.annotation.Resource;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Controller
+<span class="fc" id="L23">public class HistoryEventController {</span>
+    @Autowired
+    private UsersService usersService;
+    @Autowired
+    private EventService eventService;
+
+    @Autowired
+    private CommentService commentService;
+
+    @Autowired
+    private VenueService venueService;
+    @Autowired
+    private AvatarService avatarService;
+    @Autowired
+    private DTOService dtoService;
+    @Resource
+    private JwtUtils jwtUtils;
+
+    /**
+     * 获取指定活动信息
+     * @param eventId 活动id
+     * @return 活动信息
+     */
+    @GetMapping(&quot;/historyevents/{eventId}&quot;)
+    @Transactional
+    public ResponseEntity&lt;EventCommentDTO&gt; getHistoryEventById(@PathVariable int eventId) {
+<span class="fc" id="L49">        return ResponseEntity.ok().body(dtoService.getEventCommentDTO(eventId));</span>
+    }
+
+    /**
+     * 获取历史活动
+     * @param query 查询条件
+     * @return 活动列表
+     */
+    @PostMapping(&quot;/historyevents&quot;)
+    @Transactional
+    public ResponseEntity&lt;List&lt;EventDTO&gt;&gt; getHistoryEvents(@RequestBody EventQuery query) {
+<span class="pc bpc" id="L60" title="1 of 2 branches missed.">        if (query.getOrganizerNames() != null) {</span>
+<span class="fc" id="L61">            List&lt;String&gt; organizerNames = query.getOrganizerNames();</span>
+<span class="fc" id="L62">            List&lt;Integer&gt; organizerIds = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L63" title="All 2 branches covered.">            for (String name : organizerNames) {</span>
+<span class="fc" id="L64">                Users user = usersService.findUserByUsername(name);</span>
+<span class="pc bpc" id="L65" title="1 of 2 branches missed.">                if(user != null) {</span>
+<span class="fc" id="L66">                    organizerIds.add(user.getUserId());</span>
+                }
+<span class="fc" id="L68">            }</span>
+<span class="fc" id="L69">            query.setOrganizerIds(organizerIds);</span>
+        }
+
+<span class="pc bpc" id="L72" title="1 of 2 branches missed.">        if (query.getVenueNames() != null) {</span>
+<span class="fc" id="L73">            List&lt;String&gt; venueNames = query.getVenueNames();</span>
+<span class="fc" id="L74">            List&lt;Integer&gt; venueIds = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L75" title="All 2 branches covered.">            for (String name : venueNames) {</span>
+<span class="fc" id="L76">                Venue venue = venueService.findByName(name);</span>
+<span class="pc bpc" id="L77" title="1 of 2 branches missed.">                if (venue != null) {</span>
+<span class="fc" id="L78">                    venueIds.add(venue.getVenueId());</span>
+                }
+<span class="fc" id="L80">            }</span>
+<span class="fc" id="L81">            System.out.println(venueIds);</span>
+<span class="fc" id="L82">            query.setVenueIds(venueIds);</span>
+        }
+<span class="fc" id="L84">        List&lt;Event&gt; events = eventService.findEventsByQuery(query);</span>
+<span class="fc" id="L85">        Date today = new Date();</span>
+<span class="fc" id="L86">        List&lt;Event&gt; filteredEvents = events.stream()</span>
+<span class="pc bnc" id="L87" title="All 4 branches missed.">                .filter(event -&gt; !event.getDate().after(today) &amp;&amp; !&quot;approved&quot;.equals(event.getType().toString())).toList();</span>
+<span class="fc" id="L88">        List&lt;EventDTO&gt; eventDTOS = filteredEvents.stream()</span>
+<span class="fc" id="L89">                .map(dtoService::convertToDTO)</span>
+<span class="fc" id="L90">                .collect(Collectors.toList());</span>
+<span class="fc" id="L91">        return ResponseEntity.ok().body(eventDTOS);</span>
+    }
+
+    /**
+     * 发起评分
+     * @param token token
+     * @param eventId 活动id
+     * @param content 评价内容
+     * @param rating 评分
+     * @return 评分
+     */
+    @PostMapping(&quot;/comments&quot;)
+    public ResponseEntity&lt;?&gt; addComment(@RequestHeader(&quot;Authorization&quot;) String token,
+                                        @RequestParam int eventId,
+                                        @RequestParam String content,
+                                        @RequestParam int rating) {
+<span class="fc bfc" id="L107" title="All 2 branches covered.">        if (!jwtUtils.validateToken(token)) {</span>
+<span class="fc" id="L108">            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(&quot;Invalid or missing token&quot;);</span>
+        }
+        try {
+<span class="fc" id="L111">            int userId = usersService.findUserByUsername(jwtUtils.getUsername(token)).getUserId();</span>
+<span class="fc" id="L112">            Comment comment = commentService.addComment(userId, eventId, content, rating);</span>
+<span class="fc" id="L113">            return ResponseEntity.ok(comment);</span>
+<span class="fc" id="L114">        } catch (IllegalArgumentException e) {</span>
+<span class="fc" id="L115">            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());</span>
+<span class="fc" id="L116">        } catch (IllegalStateException e) {</span>
+<span class="fc" id="L117">            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());</span>
+<span class="nc" id="L118">        } catch (Exception e) {</span>
+<span class="nc" id="L119">            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(&quot;An unexpected error occurred: &quot; + e.getMessage());</span>
+        }
+    }
+
+    /**
+     * 修改评分
+     * @param token token
+     * @param eventId 活动id
+     * @param content 评价内容
+     * @param rating 评分
+     * @return 评分
+     */
+    @PutMapping(&quot;/comments&quot;)
+    public ResponseEntity&lt;?&gt; modifyComment(@RequestHeader(&quot;Authorization&quot;) String token,
+                                                 @RequestParam int eventId,
+                                                 @RequestParam String content,
+                                                 @RequestParam int rating) {
+<span class="fc bfc" id="L136" title="All 2 branches covered.">        if (!jwtUtils.validateToken(token)) {</span>
+<span class="fc" id="L137">            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();</span>
+        }
+<span class="fc" id="L139">        int userId = usersService.findUserByUsername(jwtUtils.getUsername(token)).getUserId();</span>
+        try {
+<span class="fc" id="L141">            Comment comment = commentService.modifyComment(userId, eventId, content, rating);</span>
+<span class="fc" id="L142">            return ResponseEntity.ok(comment);</span>
+<span class="fc" id="L143">        } catch (IllegalArgumentException e) {</span>
+<span class="fc" id="L144">            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());</span>
+<span class="fc" id="L145">        } catch (IllegalStateException e) {</span>
+<span class="fc" id="L146">            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());</span>
+        }
+    }
+
+    /**
+     * 删除评分
+     * @param token token
+     * @param eventId 活动id
+     * @return 评分
+     */
+    @DeleteMapping(&quot;/comments&quot;)
+    public ResponseEntity&lt;?&gt; deleteComment(@RequestHeader(&quot;Authorization&quot;) String token,
+                                              @RequestParam int eventId) {
+<span class="fc bfc" id="L159" title="All 2 branches covered.">        if (!jwtUtils.validateToken(token)) {</span>
+<span class="fc" id="L160">            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();</span>
+        }
+<span class="fc" id="L162">        int userId = usersService.findUserByUsername(jwtUtils.getUsername(token)).getUserId();</span>
+        try {
+<span class="fc" id="L164">            commentService.deleteComment(userId, eventId);</span>
+<span class="fc" id="L165">            return ResponseEntity.noContent().build();</span>
+<span class="fc" id="L166">        } catch (IllegalStateException e) {</span>
+<span class="fc" id="L167">            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());</span>
+<span class="fc" id="L168">        } catch (IllegalArgumentException e) {</span>
+<span class="fc" id="L169">            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());</span>
+        }
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.9.202303310957</span></div></body></html>

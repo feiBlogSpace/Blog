@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Event.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">CampusEventsAndEntertainmentCenter</a> &gt; <a href="index.source.html" class="el_package">com.team20.backend.model</a> &gt; <span class="el_source">Event.java</span></div><h1>Event.java</h1><pre class="source lang-java linenums">package com.team20.backend.model;
+
+import jakarta.persistence.*;
+import java.util.Date;
+/**
+ * AI-generated-content
+ * tool: chatGpt
+ * version: 3.5
+ * usage: 根据表的内容生成了对应的方法，在表修改之后我又添加了两条方法
+ */
+@Entity
+@Table(name = &quot;Events&quot;)
+<span class="fc" id="L13">public class Event {</span>
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = &quot;event_id&quot;)
+    private int eventId;
+
+    @Column(name = &quot;title&quot;, nullable = false)
+    private String title;
+
+    @Column(name = &quot;description&quot;, columnDefinition = &quot;TEXT&quot;)
+    private String description;
+
+    @Column(name = &quot;date&quot;, nullable = false)
+    @Temporal(TemporalType.DATE)
+    private Date date;
+
+    @Column(name = &quot;start_time&quot;, nullable = false)
+    @Temporal(TemporalType.TIME)
+    private Date startTime;
+
+    @Column(name = &quot;end_time&quot;, nullable = false)
+    @Temporal(TemporalType.TIME)
+    private Date endTime;
+
+    @Column(name = &quot;venue_id&quot;, nullable = false)
+    private int venueId;
+
+    @Column(name = &quot;category_id&quot;, nullable = false)
+    private int categoryId;
+
+    @Column(name = &quot;type&quot;, nullable = false, length = 20)
+    @Enumerated(EnumType.STRING)
+    private EventType type;
+
+    @Column(name = &quot;organizer_id&quot;, nullable = false)
+    private int organizerId;
+
+    @Column(name = &quot;capacity_limit&quot;)
+    private Integer capacityLimit;
+
+    @Column(name = &quot;remaining&quot;)
+    private Integer remaining;
+
+
+    @Column(name = &quot;rating&quot;)
+    private int rating; // 0-10
+    public int getRating() {
+<span class="nc" id="L60">        return rating;</span>
+    }
+    public void setRating(int rating) {
+<span class="fc" id="L63">        this.rating = rating;</span>
+<span class="fc" id="L64">    }</span>
+    public int getEventId() {
+<span class="fc" id="L66">        return eventId;</span>
+    }
+
+    public void setEventId(int eventId) {
+<span class="fc" id="L70">        this.eventId = eventId;</span>
+<span class="fc" id="L71">    }</span>
+
+    public String getTitle() {
+<span class="fc" id="L74">        return title;</span>
+    }
+
+    public void setTitle(String title) {
+<span class="fc" id="L78">        this.title = title;</span>
+<span class="fc" id="L79">    }</span>
+
+    public String getDescription() {
+<span class="nc" id="L82">        return description;</span>
+    }
+
+    public void setDescription(String description) {
+<span class="nc" id="L86">        this.description = description;</span>
+<span class="nc" id="L87">    }</span>
+
+    public Date getDate() {
+<span class="fc" id="L90">        return date;</span>
+    }
+
+    public void setDate(Date date) {
+<span class="fc" id="L94">        this.date = date;</span>
+<span class="fc" id="L95">    }</span>
+
+    public Date getStartTime() {
+<span class="fc" id="L98">        return startTime;</span>
+    }
+
+    public void setStartTime(Date startTime) {
+<span class="fc" id="L102">        this.startTime = startTime;</span>
+<span class="fc" id="L103">    }</span>
+
+    public Date getEndTime() {
+<span class="fc" id="L106">        return endTime;</span>
+    }
+
+    public void setEndTime(Date endTime) {
+<span class="fc" id="L110">        this.endTime = endTime;</span>
+<span class="fc" id="L111">    }</span>
+
+    public int getVenueId() {
+<span class="fc" id="L114">        return venueId;</span>
+    }
+
+    public void setVenueId(int venueId) {
+<span class="fc" id="L118">        this.venueId = venueId;</span>
+<span class="fc" id="L119">    }</span>
+
+    public int getCategoryId() {
+<span class="fc" id="L122">        return categoryId;</span>
+    }
+
+    public void setCategoryId(int categoryId) {
+<span class="fc" id="L126">        this.categoryId = categoryId;</span>
+<span class="fc" id="L127">    }</span>
+
+    public EventType getType() {
+<span class="fc" id="L130">        return type;</span>
+    }
+
+    public void setType(EventType type) {
+<span class="fc" id="L134">        this.type = type;</span>
+<span class="fc" id="L135">    }</span>
+
+    public int getOrganizerId() {
+<span class="fc" id="L138">        return organizerId;</span>
+    }
+
+    public void setOrganizerId(int organizerId) {
+<span class="fc" id="L142">        this.organizerId = organizerId;</span>
+<span class="fc" id="L143">    }</span>
+
+    public Integer getCapacityLimit() {
+<span class="fc" id="L146">        return capacityLimit;</span>
+    }
+
+    public void setCapacityLimit(Integer capacityLimit) {
+<span class="fc" id="L150">        this.capacityLimit = capacityLimit;</span>
+<span class="fc" id="L151">    }</span>
+
+    public Integer getRemaining() {
+<span class="fc" id="L154">        return remaining;</span>
+    }
+
+    public void setRemaining(Integer remaining) {
+<span class="fc" id="L158">        this.remaining = remaining;</span>
+<span class="fc" id="L159">    }</span>
+
+<span class="fc" id="L161">    public enum EventType {</span>
+<span class="fc" id="L162">        approved,</span>
+<span class="fc" id="L163">        pending,</span>
+<span class="fc" id="L164">        rejected</span>
+    }
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.9.202303310957</span></div></body></html>

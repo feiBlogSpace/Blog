@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ReportController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">CampusEventsAndEntertainmentCenter</a> &gt; <a href="index.source.html" class="el_package">com.team20.backend.controller</a> &gt; <span class="el_source">ReportController.java</span></div><h1>ReportController.java</h1><pre class="source lang-java linenums">package com.team20.backend.controller;
+
+import com.team20.backend.model.Report;
+import com.team20.backend.service.ForumService;
+import com.team20.backend.service.ReportService;
+import com.team20.backend.service.UsersService;
+import com.team20.backend.util.JwtUtils;
+import jakarta.annotation.Resource;
+import org.antlr.v4.runtime.Token;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+<span class="fc" id="L18">public class ReportController {</span>
+    @Autowired
+    private ReportService reportService;
+    @Autowired
+    private ForumService forumService;
+
+    @Autowired
+    private UsersService usersService;
+    @Resource
+    private JwtUtils jwtUtils;
+    /**
+     * 举报话题
+     * @param topicId 话题id
+     * @param reason 举报原因
+     * @return 举报结果
+     */
+    @PostMapping(&quot;/forum/topics/{topicId}/report&quot;)
+    public ResponseEntity&lt;String&gt; reportTopic(@RequestHeader(&quot;Authorization&quot;) String token, @PathVariable int topicId, @RequestParam String reason) {
+        // 保存举报信息到数据库
+<span class="fc bfc" id="L37" title="All 2 branches covered.">        if(!jwtUtils.validateToken(token)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();</span>
+<span class="fc" id="L38">        reportService.reportTopic(usersService.findUserByUsername(jwtUtils.getUsername(token)),topicId, reason);</span>
+<span class="fc" id="L39">        return ResponseEntity.ok(&quot;举报成功&quot;);</span>
+    }
+
+    /**
+     * 举报回复
+     * @param topicId 话题id
+     * @param replyId 回复id
+     * @param reason 举报原因
+     * @return 举报结果
+     */
+    @PostMapping(&quot;/forum/topics/{topicId}/replies/{replyId}/report&quot;)
+    public ResponseEntity&lt;String&gt; reportReply(@RequestHeader(&quot;Authorization&quot;) String token, @PathVariable int topicId, @PathVariable int replyId, @RequestParam String reason) {
+        // 保存举报信息到数据库
+<span class="fc bfc" id="L52" title="All 2 branches covered.">        if(!jwtUtils.validateToken(token)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();</span>
+<span class="fc" id="L53">        reportService.reportReply(usersService.findUserByUsername(jwtUtils.getUsername(token)),topicId, replyId, reason);</span>
+<span class="fc" id="L54">        return ResponseEntity.ok(&quot;举报成功&quot;);</span>
+    }
+
+    /**
+     * 获取所有举报信息
+     * @return 所有举报信息
+     */
+    @GetMapping(&quot;/forum/reports&quot;)
+    public ResponseEntity&lt;List&lt;Report&gt;&gt; getReports(@RequestHeader(&quot;Authorization&quot;) String token) {
+<span class="fc bfc" id="L63" title="All 2 branches covered.">        if(!jwtUtils.validateSuperUser(token)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();</span>
+<span class="fc" id="L64">        return ResponseEntity.ok(reportService.getReports());</span>
+    }
+
+    /**
+     * 超级用户删除举报信息
+     * @param token token
+     * @param reportId 举报信息id
+     * @return 删除结果
+     */
+    @DeleteMapping(&quot;/forum/reports/{reportId}&quot;)
+    public ResponseEntity&lt;String&gt; deleteReport(@RequestHeader(&quot;Authorization&quot;) String token, @PathVariable int reportId) {
+<span class="fc bfc" id="L75" title="All 2 branches covered.">        if(!jwtUtils.validateSuperUser(token)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();</span>
+<span class="fc" id="L76">        reportService.deleteReport(reportId);</span>
+<span class="fc" id="L77">        return ResponseEntity.ok(&quot;删除举报成功&quot;);</span>
+    }
+
+    /**
+     * 处理举报信息 如果是举报话题，删除话题 如果是举报回复，删除回复
+     * @param reportId 举报信息id
+     * @return 处理结果
+     */
+    @PostMapping(&quot;/forum/reports/{reportId}&quot;)
+    public ResponseEntity&lt;String&gt; handleReport(@RequestHeader(&quot;Authorization&quot;) String token, @PathVariable int reportId) {
+<span class="fc bfc" id="L87" title="All 2 branches covered.">        if(!jwtUtils.validateSuperUser(token)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();</span>
+<span class="fc" id="L88">        Report report = reportService.getReportById(reportId).orElse(null);</span>
+<span class="fc bfc" id="L89" title="All 2 branches covered.">        if (report == null) {</span>
+<span class="fc" id="L90">            return ResponseEntity.badRequest().body(&quot;没找到举报信息&quot;);</span>
+        }
+<span class="fc bfc" id="L92" title="All 2 branches covered.">        if (report.getReplyId() == 0) {</span>
+            // 举报话题
+<span class="fc" id="L94">            forumService.deleteForumTopicById(report.getTopicId());</span>
+        } else {
+            // 举报回复
+<span class="fc" id="L97">            forumService.deleteForumReplyById(report.getReplyId());</span>
+        }
+<span class="fc" id="L99">        return ResponseEntity.ok(&quot;处理举报成功&quot;);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.9.202303310957</span></div></body></html>

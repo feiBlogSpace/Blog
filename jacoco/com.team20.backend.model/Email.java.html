@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Email.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">CampusEventsAndEntertainmentCenter</a> &gt; <a href="index.source.html" class="el_package">com.team20.backend.model</a> &gt; <span class="el_source">Email.java</span></div><h1>Email.java</h1><pre class="source lang-java linenums">package com.team20.backend.model;
+
+import jakarta.persistence.*;
+import java.sql.Timestamp;
+
+/**
+ * Email model class corresponding to the Emails table in the database.
+ * Provides getters and setters for managing Email objects.
+ */
+@Entity
+@Table(name = &quot;Emails&quot;)
+public class Email {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = &quot;id&quot;)
+    private int id;
+
+    @Column(name = &quot;UserID&quot;, nullable = false)
+    private int userID;
+
+    @Column(name = &quot;Subject&quot;, nullable = false, length = 255)
+    private String subject;
+
+    @Column(name = &quot;Body&quot;, nullable = false, columnDefinition = &quot;TEXT&quot;)
+    private String body;
+
+    @Column(name = &quot;Time&quot;, nullable = false)
+    @Temporal(TemporalType.TIMESTAMP)
+    private Timestamp time;
+
+    @Column(name = &quot;status&quot;, length = 20)
+    @Enumerated(EnumType.STRING)
+    private EmailStatus status;
+
+    // Default constructor
+<span class="fc" id="L37">    public Email() {</span>
+<span class="fc" id="L38">    }</span>
+
+    // Getters and setters
+    public int getId() {
+<span class="nc" id="L42">        return id;</span>
+    }
+
+    public void setId(int id) {
+<span class="nc" id="L46">        this.id = id;</span>
+<span class="nc" id="L47">    }</span>
+
+    public int getUserID() {
+<span class="nc" id="L50">        return userID;</span>
+    }
+
+    public void setUserID(int userID) {
+<span class="fc" id="L54">        this.userID = userID;</span>
+<span class="fc" id="L55">    }</span>
+
+    public String getSubject() {
+<span class="fc" id="L58">        return subject;</span>
+    }
+
+    public void setSubject(String subject) {
+<span class="fc" id="L62">        this.subject = subject;</span>
+<span class="fc" id="L63">    }</span>
+
+    public String getBody() {
+<span class="fc" id="L66">        return body;</span>
+    }
+
+    public void setBody(String body) {
+<span class="fc" id="L70">        this.body = body;</span>
+<span class="fc" id="L71">    }</span>
+
+    public Timestamp getTime() {
+<span class="nc" id="L74">        return time;</span>
+    }
+
+    public void setTime(Timestamp time) {
+<span class="fc" id="L78">        this.time = time;</span>
+<span class="fc" id="L79">    }</span>
+
+    public EmailStatus getStatus() {
+<span class="fc" id="L82">        return status;</span>
+    }
+
+    public void setStatus(EmailStatus status) {
+<span class="fc" id="L86">        this.status = status;</span>
+<span class="fc" id="L87">    }</span>
+
+<span class="fc" id="L89">    public enum EmailStatus {</span>
+<span class="fc" id="L90">        unread,</span>
+<span class="fc" id="L91">        read,</span>
+<span class="fc" id="L92">        deleted</span>
+    }
+//    @Override
+//    public String toString() {
+//        return &quot;Email{&quot; +
+//                &quot;id=&quot; + id +
+//                &quot;, userID=&quot; + userID +
+//                &quot;, subject='&quot; + subject + '\'' +
+//                &quot;, body='&quot; + body + '\'' +
+//                &quot;, time=&quot; + time +
+//                '}';
+//    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.9.202303310957</span></div></body></html>

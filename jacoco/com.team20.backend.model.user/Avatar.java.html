@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Avatar.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">CampusEventsAndEntertainmentCenter</a> &gt; <a href="index.source.html" class="el_package">com.team20.backend.model.user</a> &gt; <span class="el_source">Avatar.java</span></div><h1>Avatar.java</h1><pre class="source lang-java linenums">package com.team20.backend.model.user;
+
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = &quot;Avatars&quot;)
+<span class="fc" id="L7">public class Avatar {</span>
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = &quot;avatar_id&quot;)
+    private int avatarId;
+
+    @Column(name = &quot;user_id&quot;, nullable = false)
+    private int userId;
+
+    @Column(name = &quot;avatar_data&quot;)
+    private byte[] avatarData;
+
+    @Column(name = &quot;status&quot;, nullable = false)
+    private String status;
+
+    public int getAvatarId() {
+<span class="nc" id="L23">        return avatarId;</span>
+    }
+
+    public void setAvatarId(int avatarId) {
+<span class="fc" id="L27">        this.avatarId = avatarId;</span>
+<span class="fc" id="L28">    }</span>
+
+    public int getUserId() {
+<span class="fc" id="L31">        return userId;</span>
+    }
+
+    public void setUserId(int userId) {
+<span class="fc" id="L35">        this.userId = userId;</span>
+<span class="fc" id="L36">    }</span>
+
+    public byte[] getAvatarData() {
+<span class="nc" id="L39">        return avatarData;</span>
+    }
+
+    public void setAvatarData(byte[] avatarData) {
+<span class="fc" id="L43">        this.avatarData = avatarData;</span>
+<span class="fc" id="L44">    }</span>
+
+    public String getStatus() {
+<span class="fc" id="L47">        return status;</span>
+    }
+
+    public void setStatus(String status) {
+<span class="fc" id="L51">        this.status = status;</span>
+<span class="fc" id="L52">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.9.202303310957</span></div></body></html>
